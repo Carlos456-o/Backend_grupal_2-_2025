@@ -1,14 +1,14 @@
 {
-  "name": "bakend_ferreteria_carlos_oporta_2025",
+  "name": "bakend_wed_grupo2_2025",
   "version": "1.0.0",
-  "description": "Bakend Ferreteria",
+  "description": "Bakend wed",
   "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js"
   },
-  "author": "Carlos Oporta",
+  "author": "Grupo 2 - 2025",
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
