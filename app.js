@@ -4,7 +4,6 @@ import cors from 'cors';
 
 //Importar las rutas
 import rutasProducto from "./src/routes/producto.routes.js";
-import rutasUsuario from "./src/routes/usuario.routes.js";
 import rutasVentas from "./src/routes/ventas.routes.js";
 import rutasDetallesVentas from "./src/routes/detalle_ventas.routes.js"; 
 import rutasCompras from "./src/routes/compras.routes.js";
@@ -26,15 +25,13 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Rutas
-app.use("/api", rutasCategorias);
 app.use("/api", rutasProducto);
-app.use("/api", rutasUsuario);
 app.use("/api", rutasVentas);
 app.use("/api", rutasDetallesVentas);
 app.use("/api", rutasCompras);
 app.use("/api", rutasDetallesCompras);
-app.use("/api", rutasEmpleados);
 app.use("/api", rutasClientes);
+app.use("/api", rutas);
 
 
 // Manejo de rutas no encontradas
