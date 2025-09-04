@@ -3,7 +3,7 @@
   // Obtener todas las detalles de ventas
   export const obtenerDetallesVentas = async (req, res) => {
     try {
-      const [result] = await pool.query("SELECT * FROM detalles_ventas");
+      const [result] = await pool.query("SELECT * FROM Detalles_Ventas");
       res.json(result);
     } catch (error) {
       return res.status(500).json({

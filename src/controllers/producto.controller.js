@@ -3,7 +3,7 @@
   // Obtener todas las productos
   export const obtenerProducto = async (req, res) => {
     try {
-      const [result] = await pool.query("SELECT * FROM productos");
+      const [result] = await pool.query("SELECT * FROM Productos");
       res.json(result);
     } catch (error) {
       return res.status(500).json({
