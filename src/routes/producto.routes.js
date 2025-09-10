@@ -8,7 +8,7 @@ const router = Router();
 router.get("/productos", obtenerProductos);
 
 // Ruta para obtener un cliente por su ID
-router.get('/productos/:id_producto', obtenerProducto);
+router.get("/compras/:ID_Compra", obtenerCompra);
 
 // Ruta para registrar una nueva Categoría
 router.post('/registrarProducto', registrarProducto);

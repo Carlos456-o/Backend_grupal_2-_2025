@@ -16,14 +16,14 @@ export const obtenerClientes = async (req, res) => {
 // Obtener una categoría por su ID
 export const obtenerCliente = async (req, res) => {
   try {
-    const id_cliente = req.params.id_cliente;
+    const ID_Cliente = req.params.ID_Cliente;
     const [result] = await pool.query(
-      "SELECT * FROM Clientes WHERE id_cliente= ?",
+      "SELECT * FROM Clientes WHERE ID_Cliente= ?",
       [id_cliente]
     );
     if (result.length <= 0) {
       return res.status(404).json({
-        mensaje: `Error al leer los datos. ID ${id_cliente} no encontrado.`,
+        mensaje: `Error al leer los datos. ID ${ID_Cliente} no encontrado.`,
       });
     }
     res.json(result[0]);
@@ -37,22 +37,16 @@ export const obtenerCliente = async (req, res) => {
 // Registrar una nueva Cliente
 export const registrarCliente = async (req, res) => {
   try {
-    const { primer_nombre,
-          segundo_nombre,
-        primer_apellido,
-      segundo_apellido, telefono, 
-       cedula } 
-    = req.body;
+    const { Nombre1, Nombre2, Apellidos1, Apellidos2, Cedula, Telefono } = req.body;
     const [result] = await pool.query(
-      'INSERT INTO clientes (primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, telefono, cedula) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [primer_nombre,
-         segundo_nombre, primer_apellido, segundo_apellido, telefono, direccion, cedula ]
+      'INSERT INTO clientes ( Nombre1, Nombre2, Apellidos1, Apellidos2, Cedula, Telefono ) VALUES (?, ?, ?, ?, ?, ?)',
+      [ Nombre1, Nombre2, Apellidos1, Apellidos2, Cedula, Telefono ]
     );
-    res.status(201).json({ id_categoria: result.insertId });
+    res.status(201).json({ id_cliente: result.insertId });
   } catch (error) {
     return res.status(500).json({
-      mensaje: "Ha ocurrido un error al registrar la cliente.",
-      error: error,
+      mensaje: 'Ha ocurrido un error al registrar el cliente.',
+      error: error
     });
-  }
+  } 
 };

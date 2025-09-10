@@ -7,9 +7,9 @@ const router = Router();
 router.get("/detallesventas", obtenerDetallesVentas);
 
 // Ruta para obtenr un detalle de venta por su ID
-router.get("/detalleventa/:id_detalle_venta", obtenerDetalleVenta);
+router.get("/detallesventas/:ID_DetalleVenta", obtenerDetalleVenta);
 
 // Ruta para registrar una nueva Categoría
-router.post('/registrardetalleventa', registrardetalleventa);
+router.post('/registrarDetalleVenta', registrardetalleventa);
 
 export default router;

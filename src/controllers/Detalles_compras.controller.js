@@ -17,14 +17,14 @@
   // Obtener una detalle de compra por su ID
   export const obtenerDetalleCompra = async (req, res) => {
     try {
-      const id_detalle_compra = req.params.id_detalle_compra;
+      const ID_Detales_Com = req.params.ID_Detales_Com;
       const [result] = await pool.query(
-        "SELECT * FROM detalles_compras WHERE id_detalle_compra= ?",
-        [id_detalle_compra]
+        "SELECT * FROM Detalle_Compras WHERE ID_Detales_Com= ?",
+        [ID_Detales_Com]
       );  
       if (result.length <= 0) {
         return res.status(404).json({
-          mensaje: `Error al leer los datos. ID ${id_detalle_compra} no encontrado.`,
+          mensaje: `Error al leer los datos. ID ${ID_Detales_Com} no encontrado.`,
         });
       }
       res.json(result[0]);
@@ -38,10 +38,10 @@
   // Registrar un nuevo detalle  Detalle de Compra
   export const registrarCompra = async (req, res) => {
     try {
-      const { ID_Detales_Com, ID_Compra, ID_Producto, Cantidad_ven, Precio_Ven } = req.body;
+      const { ID_Compra, ID_Producto, Cantidad_com, Precio_Com } = req.body;
       const [result] = await pool.query(
-        'INSERT INTO compras (ID_Detales_Com, ID_Compra, ID_Producto,Cantidad_ven, Precio_Ven  ) VALUES (?, ?, ?)',
-        [ID_Detales_Com, ID_Compra, ID_Producto,Cantidad_ven, Precio_Ven  ]
+        'INSERT INTO compras ( ID_Compra, ID_Producto,Cantidad_com, Precio_Com  ) VALUES (?, ?, ?)',
+        [ ID_Compra, ID_Producto,Cantidad_com, Precio_Com  ]
       );
       res.status(201).json({ id_compra: result.insertId });
     } catch (error) {
