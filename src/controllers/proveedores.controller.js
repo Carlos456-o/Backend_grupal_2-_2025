@@ -13,3 +13,41 @@
     }
   };
 
+  // Obtener un Proveedor por su ID
+export const obtenerProveedor = async (req, res) => {
+  try {
+    const ID_Proveedor = req.params.ID_Proveedor;
+    const [result] = await pool.query(
+      "SELECT * FROM Proveedor WHERE ID_Proveedor= ?",
+      [ID_Proveedor]
+    );
+    if (result.length <= 0) {
+      return res.status(404).json({
+        mensaje: `Error al leer los datos. ID ${ID_Proveedor} no encontrado.`,
+      });
+    }
+    res.json(result[0]);
+  } catch (error) {
+    return res.status(500).json({
+      mensaje: "Ha ocurrido un error al leer los datos de los Proveedores.",
+    });
+  }
+};
+
+// Registrar una nuevo Proveedor
+export const registrarProveedor = async (req, res) => {
+  try {
+    const { Nombre_Prov,  Contacto, Email } = req.body;
+    const [result] = await pool.query(
+      'INSERT INTO Proveedor ( Nombre_Prov, Contacto, Email ) VALUES (?, ?, ?, ?, ?, ?)',
+      [ Nombre_Prov, Contacto, Email ]
+    );
+    res.status(201).json({ ID_Proveedor: result.insertId });
+  } catch (error) {
+    return res.status(500).json({
+      mensaje: 'Ha ocurrido un error al registrar el Proveedor.',
+      error: error
+    });
+  } 
+};
+
