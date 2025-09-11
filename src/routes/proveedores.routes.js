@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { obtenerProveedores, obtenerProveedor, registrarProveedores } from "../controllers/proveedores.controller.js";
+import { obtenerProveedores, obtenerProveedor, registrarProveedor } from "../controllers/proveedores.controller.js";
 
 const router = Router();
 
@@ -10,6 +10,6 @@ router.get("/proveedor", obtenerProveedores);
 router.get('/proveedores/:id_proveedor', obtenerProveedor);
 
 // Ruta para registrar una nueva Categoría
-router.post('/registrarProveedores', registrarProveedores);
+router.post('/registrarProveedores', registrarProveedor);
 
 export default router;

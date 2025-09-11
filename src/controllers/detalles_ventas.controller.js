@@ -3,7 +3,7 @@
   // Obtener todas las detalles de ventas
   export const obtenerDetallesVentas = async (req, res) => {
     try {
-      const [result] = await pool.query("SELECT * FROM Detalles_Ventas");
+      const [result] = await pool.query("SELECT * FROM Detalle_Ventas");
       res.json(result);
     } catch (error) {
       return res.status(500).json({
@@ -44,14 +44,14 @@
         [ID_Venta, ID_Producto, Cantidad_ven, Precio_Ven]
       );
       res.json({
-        ID_Detalle_ven: result.insertId,
+        mensaje: "Detalle de Venta registrado exitosamente.",
+        ID_Detalle_ven: result.insertId,  
         ID_Venta,
         ID_Producto,
         Cantidad_ven,
-        Precio_Ven,
+        Precio_Ven
       });
-    }
-      catch (error) {
+    } catch (error) {
       return res.status(500).json({
         mensaje: "Ha ocurrido un error al registrar el detalle de venta.",
         error: error,
