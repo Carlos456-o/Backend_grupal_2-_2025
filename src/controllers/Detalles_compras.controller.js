@@ -51,3 +51,28 @@
       });
     }   
   };
+
+   // Eliminar un detalle de compra por su ID
+export const eliminarDetalleCompra = async (req, res) => {
+  try {
+    const id_detalle_compra = req.params.id_detalle_compra;
+    const [result] = await pool.query(
+      'DELETE FROM Detalles_Compras WHERE id_detalle_compra = ?',
+      [id_detalle_compra]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        mensaje: `Error al eliminar el detalle compra. El ID ${id_detalle_compra} no fue encontrado.`
+      });
+    }
+
+    // Respuesta sin contenido para indicar éxito
+    res.status(204).send();
+  } catch (error) {
+    return res.status(500).json({
+      mensaje: 'Ha ocurrido un error al eliminar el detalle compra.',
+      error: error
+    });
+  }
+};

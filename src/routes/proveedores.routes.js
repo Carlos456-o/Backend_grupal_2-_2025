@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { obtenerProveedores, obtenerProveedor, registrarProveedor } from "../controllers/proveedores.controller.js";
+import { obtenerProveedores, obtenerProveedor, registrarProveedor, eliminarProveedor } from "../controllers/proveedores.controller.js";
 
 const router = Router();
 
@@ -11,5 +11,8 @@ router.get('/proveedores/:id_proveedor', obtenerProveedor);
 
 // Ruta para registrar una nueva Categoría
 router.post('/registrarProveedores', registrarProveedor);
+
+//ruta para eliminar una venta por su ID
+router.delete('/eliminarproveedores/:id_proveedor', eliminarProveedor);
 
 export default router;

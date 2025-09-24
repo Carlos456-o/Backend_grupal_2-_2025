@@ -52,3 +52,28 @@ export const obtenerVentas = async (req, res) => {
       });
     }
   };
+
+  // Eliminar una venta por su ID
+export const eliminarVenta = async (req, res) => {
+  try {
+    const id_venta = req.params.id_venta;
+    const [result] = await pool.query(
+      'DELETE FROM Ventas WHERE id_venta = ?',
+      [id_venta]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        mensaje: `Error al eliminar la venta. El ID ${id_venta} no fue encontrado.`
+      });
+    }
+
+    // Respuesta sin contenido para indicar éxito
+    res.status(204).send();
+  } catch (error) {
+    return res.status(500).json({
+      mensaje: 'Ha ocurrido un error al eliminar la venta.',
+      error: error
+    });
+  }
+};
