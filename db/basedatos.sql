@@ -75,6 +75,14 @@ CREATE TABLE Bitacora (
     Fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
     Detalle TEXT
 );
+
+-- Tabla Usuarios: almacena credenciales de acceso
+CREATE TABLE Usuarios (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    usuario VARCHAR(20),
+    contraseña VARCHAR(20)
+);
+
 -- ======================================
 -- CLIENTES
 -- ======================================
@@ -301,9 +309,6 @@ END;
 DELIMITER ;
 
 
-
-
--- Usuarios de la base de datos 
 CREATE USER 'admin_moto'@'localhost' IDENTIFIED BY 'Admin123';
 GRANT ALL PRIVILEGES ON Moto_Repuesto.* TO 'admin_moto'@'localhost' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
@@ -319,6 +324,10 @@ CREATE USER 'cliente_moto'@'localhost' IDENTIFIED BY 'Cliente123';
 GRANT SELECT ON Moto_Repuesto.Productos TO 'cliente_moto'@'localhost';
 FLUSH PRIVILEGES;
 
+INSERT INTO Usuarios (usuario, contraseña) VALUES
+('eli', 'eli2025'),
+('javier51', '123456'),
+('cruz51', '20252025');
 
 -- Insertar datos originales en Proveedores
 INSERT INTO Proveedores (Nombre_Prov, Contacto, Email) VALUES
