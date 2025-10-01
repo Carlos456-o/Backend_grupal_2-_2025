@@ -4,21 +4,22 @@ USE Moto_Repuesto;
 
 CREATE TABLE Clientes(
     ID_Cliente INT AUTO_INCREMENT PRIMARY KEY,
-    Nombre1 VARCHAR(60) NOT NULL,   
-    Nombre2 VARCHAR(60) NOT NULL,
-    Apellidos1 VARCHAR(60) NOT NULL,
-    Apellidos2 VARCHAR(60) NOT NULL,
-    Cedula VARCHAR(60),
+    Nombre1 VARCHAR(35) NOT NULL,   
+    Nombre2 VARCHAR(35) NOT NULL,
+    Apellidos1 VARCHAR(35) NOT NULL,
+    Apellidos2 VARCHAR(35) NOT NULL,
+    Cedula VARCHAR(18),
     Telefono VARCHAR(12)
 );
 
-CREATE TABLE Productos(
+CREATE TABLE Productos (
     ID_Producto INT AUTO_INCREMENT PRIMARY KEY,
     Nombre_P VARCHAR(100) NOT NULL,
     Descripcion VARCHAR(100) NOT NULL,
-    Cantidad INT NOT NULL,
-    Preciodecom FLOAT NOT NULL,
-    Preciodeven FLOAT NOT NULL
+    Cantidad INT NOT NULL,               -- cantidad real en inventario
+    Disponible BOOLEAN NOT NULL DEFAULT TRUE, -- true=disponible, false=no disponible
+    PrecioCompra DECIMAL(10,2) NOT NULL,
+    PrecioVenta DECIMAL(10,2) NOT NULL
 );
 
 CREATE TABLE Proveedores(
@@ -70,7 +71,6 @@ CREATE TABLE Bitacora (
     ID_Bitacora INT AUTO_INCREMENT PRIMARY KEY,
     Tabla VARCHAR(50) NOT NULL,
     Operacion VARCHAR(20) NOT NULL,
-    ID_Registro INT NOT NULL,
     Usuario VARCHAR(100) NOT NULL,
     Fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
     Detalle TEXT
@@ -80,7 +80,8 @@ CREATE TABLE Bitacora (
 CREATE TABLE Usuarios (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     usuario VARCHAR(20),
-    contraseña VARCHAR(20)
+    contraseña VARCHAR(20),
+    rol enum("Adm","Empleado","Cliente")
 );
 
 -- ======================================
