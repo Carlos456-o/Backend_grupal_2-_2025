@@ -75,3 +75,34 @@ export const eliminarCliente = async (req, res) => {
     });
   }
 };
+
+//Controlador para actualizar un cliente por su ID
+export const actualizarClientePatch = async (req, res) => {
+  try {
+    const id_cliente = req.params.id_cliente;
+    const { Nombre1
+      , Nombre2,
+      Apellidos1,
+      Apellidos2, Cedula
+      ,Telefono } = req.body;
+    const [result] = await pool.query(
+      'UPDATE clientes SET Nombre1 = IFNULL(?, Nombre1), Nombre2 = IFNULL(?, Nombre2), Apellidos1 = IFNULL(?, Apellidos1), Apellidos2 = IFNULL(?, Apellidos2), cedula = IFNULL(?, cedula), telefono = IFNULL(?, telefono) WHERE id_cliente = ?',
+      [Nombre1
+        , Nombre2, Apellidos1, Apellidos2, Cedula, Telefono, id_cliente]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        mensaje: `Error al actualizar el Cliente. El ID ${id_cliente} no fue encontrado.`,
+      });
+    }
+    res.status(200).json({
+    mensaje: `Cliente con ID ${id_cliente} actualizado correctamente.`
+    });
+  }
+  catch (error) {
+    return res.status(500).json({
+      mensaje: 'Ha ocurrido un error al actualizar el Cliente.',
+      error: error
+    });
+  }
+};

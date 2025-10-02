@@ -17,14 +17,14 @@
   // Obtener una detalle de compra por su ID
   export const obtenerDetalleCompra = async (req, res) => {
     try {
-      const ID_Detales_Com = req.params.ID_Detales_Com;
+      const ID_Detalles_Com = req.params.ID_Detalles_Com;
       const [result] = await pool.query(
         "SELECT * FROM Detalle_Compras WHERE ID_Detales_Com= ?",
-        [ID_Detales_Com]
+        [ID_Detalles_Com]
       );  
       if (result.length <= 0) {
         return res.status(404).json({
-          mensaje: `Error al leer los datos. ID ${ID_Detales_Com} no encontrado.`,
+          mensaje: `Error al leer los datos. ID ${ID_Detalles_Com} no encontrado.`,
         });
       }
       res.json(result[0]);
@@ -76,3 +76,31 @@ export const eliminarDetalleCompra = async (req, res) => {
     });
   }
 };
+
+
+//Controlador para actualizar parcialmente un detalle de compra por su ID
+export const actualizarParcialDetalleCompra = async (req, res) => {
+  try {
+    const id_detalle_compra = req.params.id_detalle_com;
+    const { id_compra, id_producto, cantidad_com, precio_com } = req.body;
+    const [result] = await pool.query(
+      'UPDATE detalles_compras SET id_compra = IFNULL(?, id_compra), id_producto = IFNULL(?, id_producto), cantidad_com = IFNULL(?, cantidad_com), precio_com = IFNULL(?, precio_com) WHERE id_detalle_compra = ?',
+      [id_compra, id_producto, cantidad_com, precio_com, id_detalle_compra]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        mensaje: `Error al actualizar el detalle compra. El ID ${id_detalle_compra} no fue encontrado.`,
+      });
+    }
+    res.status(200).json({
+      mensaje: `Detalle de compra con ID ${id_detalle_compra} actualizada correctamente.`
+    });
+  } catch (error) {
+    return res.status(500).json({
+      mensaje: 'Ha ocurrido un error al actualizar el detalle compra.',
+      error: error
+    });
+  }
+};
+
+

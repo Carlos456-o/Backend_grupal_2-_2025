@@ -55,7 +55,7 @@ CREATE TABLE Detalle_Ventas(
 );
 
 CREATE TABLE Detalle_Compras(
-    ID_Detales_Com INT AUTO_INCREMENT PRIMARY KEY,
+    ID_Detalles_Com INT AUTO_INCREMENT PRIMARY KEY,
     ID_Compra INT NOT NULL,
     ID_Producto INT NOT NULL,
     Cantidad_com INT NOT NULL,
@@ -92,7 +92,7 @@ CREATE TRIGGER trg_clientes_insert
 AFTER INSERT ON Clientes
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
     VALUES ('Clientes', 'INSERT', NEW.ID_Cliente, USER(),
             CONCAT('Se agregó el cliente: ', NEW.Nombre1, ' ', NEW.Apellidos1));
 END;
@@ -101,7 +101,7 @@ CREATE TRIGGER trg_clientes_update
 AFTER UPDATE ON Clientes
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion,  Usuario, Detalle)
     VALUES ('Clientes', 'UPDATE', NEW.ID_Cliente, USER(),
             CONCAT('Se actualizó el cliente: ', NEW.Nombre1, ' ', NEW.Apellidos1));
 END;
@@ -110,7 +110,7 @@ CREATE TRIGGER trg_clientes_delete
 AFTER DELETE ON Clientes
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion,  Usuario, Detalle)
     VALUES ('Clientes', 'DELETE', OLD.ID_Cliente, USER(),
             CONCAT('Se eliminó el cliente: ', OLD.Nombre1, ' ', OLD.Apellidos1));
 END;
@@ -124,7 +124,7 @@ CREATE TRIGGER trg_productos_insert
 AFTER INSERT ON Productos
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
     VALUES ('Productos', 'INSERT', NEW.ID_Producto, USER(),
             CONCAT('Se agregó el producto: ', NEW.Nombre_P));
 END;
@@ -133,7 +133,7 @@ CREATE TRIGGER trg_productos_update
 AFTER UPDATE ON Productos
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
     VALUES ('Productos', 'UPDATE', NEW.ID_Producto, USER(),
             CONCAT('Se actualizó el producto: ', NEW.Nombre_P));
 END;
@@ -142,7 +142,7 @@ CREATE TRIGGER trg_productos_delete
 AFTER DELETE ON Productos
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
     VALUES ('Productos', 'DELETE', OLD.ID_Producto, USER(),
             CONCAT('Se eliminó el producto: ', OLD.Nombre_P));
 END;
@@ -156,7 +156,7 @@ CREATE TRIGGER trg_proveedores_insert
 AFTER INSERT ON Proveedores
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
     VALUES ('Proveedores', 'INSERT', NEW.ID_Proveedor, USER(),
             CONCAT('Se agregó el proveedor: ', NEW.Nombre_Prov));
 END;
@@ -165,7 +165,7 @@ CREATE TRIGGER trg_proveedores_update
 AFTER UPDATE ON Proveedores
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
     VALUES ('Proveedores', 'UPDATE', NEW.ID_Proveedor, USER(),
             CONCAT('Se actualizó el proveedor: ', NEW.Nombre_Prov));
 END;
@@ -174,7 +174,7 @@ CREATE TRIGGER trg_proveedores_delete
 AFTER DELETE ON Proveedores
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion,  Usuario, Detalle)
     VALUES ('Proveedores', 'DELETE', OLD.ID_Proveedor, USER(),
             CONCAT('Se eliminó el proveedor: ', OLD.Nombre_Prov));
 END;
@@ -188,7 +188,7 @@ CREATE TRIGGER trg_compras_insert
 AFTER INSERT ON Compras
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
     VALUES ('Compras', 'INSERT', NEW.ID_Compra, USER(),
             CONCAT('Se registró la compra del proveedor ID: ', NEW.ID_Proveedor));
 END;
@@ -197,7 +197,7 @@ CREATE TRIGGER trg_compras_update
 AFTER UPDATE ON Compras
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
     VALUES ('Compras', 'UPDATE', NEW.ID_Compra, USER(),
             CONCAT('Se actualizó la compra ID: ', NEW.ID_Compra));
 END;
@@ -206,7 +206,7 @@ CREATE TRIGGER trg_compras_delete
 AFTER DELETE ON Compras
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
     VALUES ('Compras', 'DELETE', OLD.ID_Compra, USER(),
             CONCAT('Se eliminó la compra ID: ', OLD.ID_Compra));
 END;
@@ -220,7 +220,7 @@ CREATE TRIGGER trg_ventas_insert
 AFTER INSERT ON Ventas
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion,Usuario, Detalle)
     VALUES ('Ventas', 'INSERT', NEW.ID_Venta, USER(),
             CONCAT('Se registró la venta al cliente ID: ', NEW.ID_Cliente));
 END;
@@ -229,7 +229,7 @@ CREATE TRIGGER trg_ventas_update
 AFTER UPDATE ON Ventas
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion,  Usuario, Detalle)
     VALUES ('Ventas', 'UPDATE', NEW.ID_Venta, USER(),
             CONCAT('Se actualizó la venta ID: ', NEW.ID_Venta));
 END;
@@ -238,7 +238,7 @@ CREATE TRIGGER trg_ventas_delete
 AFTER DELETE ON Ventas
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion,  Usuario, Detalle)
     VALUES ('Ventas', 'DELETE', OLD.ID_Venta, USER(),
             CONCAT('Se eliminó la venta ID: ', OLD.ID_Venta));
 END;
@@ -252,8 +252,8 @@ CREATE TRIGGER trg_detalle_compras_insert
 AFTER INSERT ON Detalle_Compras
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
-    VALUES ('Detalle_Compras', 'INSERT', NEW.ID_Detales_Com, USER(),
+    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
+    VALUES ('Detalle_Compras', 'INSERT', NEW.ID_Detalles_Com, USER(),
             CONCAT('Se agregó producto ID ', NEW.ID_Producto, ' a la compra ID ', NEW.ID_Compra));
 END;
 //
@@ -261,8 +261,8 @@ CREATE TRIGGER trg_detalle_compras_update
 AFTER UPDATE ON Detalle_Compras
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
-    VALUES ('Detalle_Compras', 'UPDATE', NEW.ID_Detales_Com, USER(),
+    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
+    VALUES ('Detalle_Compras', 'UPDATE', NEW.ID_Detalles_Com, USER(),
             CONCAT('Se actualizó el detalle de compra ID ', NEW.ID_Detales_Com));
 END;
 //
@@ -270,8 +270,8 @@ CREATE TRIGGER trg_detalle_compras_delete
 AFTER DELETE ON Detalle_Compras
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
-    VALUES ('Detalle_Compras', 'DELETE', OLD.ID_Detales_Com, USER(),
+    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
+    VALUES ('Detalle_Compras', 'DELETE', OLD.ID_Detalles_Com, USER(),
             CONCAT('Se eliminó el detalle de compra ID ', OLD.ID_Detales_Com));
 END;
 //
@@ -284,7 +284,7 @@ CREATE TRIGGER trg_detalle_ventas_insert
 AFTER INSERT ON Detalle_Ventas
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
     VALUES ('Detalle_Ventas', 'INSERT', NEW.ID_Detalle_ven, USER(),
             CONCAT('Se agregó producto ID ', NEW.ID_Producto, ' a la venta ID ', NEW.ID_Venta));
 END;
@@ -293,7 +293,7 @@ CREATE TRIGGER trg_detalle_ventas_update
 AFTER UPDATE ON Detalle_Ventas
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
     VALUES ('Detalle_Ventas', 'UPDATE', NEW.ID_Detalle_ven, USER(),
             CONCAT('Se actualizó el detalle de venta ID ', NEW.ID_Detalle_ven));
 END;
@@ -302,7 +302,7 @@ CREATE TRIGGER trg_detalle_ventas_delete
 AFTER DELETE ON Detalle_Ventas
 FOR EACH ROW
 BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, ID_Registro, Usuario, Detalle)
+    INSERT INTO Bitacora (Tabla, Operacion,  Usuario, Detalle)
     VALUES ('Detalle_Ventas', 'DELETE', OLD.ID_Detalle_ven, USER(),
             CONCAT('Se eliminó el detalle de venta ID ', OLD.ID_Detalle_ven));
 END;

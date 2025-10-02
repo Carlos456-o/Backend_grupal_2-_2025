@@ -80,3 +80,28 @@ export const eliminarCompra = async (req, res) => {
     });
   }
 };
+
+//Controlador para actualizar parcialmente una compra por su ID
+export const actualizarParcialCompra = async (req, res) => {
+  try {
+    const id_compra = req.params.id_compra;
+    const { fecha_compra, cantidad, ID_Proveedor } = req.body;
+    const [result] = await pool.query(
+      'UPDATE Compras SET id_compra = IFNULL(?, id_compra), fecha_compra = IFNULL(?, fecha_compra), cantidad = IFNULL(?, cantidad),  Id_Proveedor = IFNULL(?, Id_Proveedor) WHERE id_compra = ?',
+      [id_compra, fecha_compra, cantidad, ID_Proveedor]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        mensaje: `Error al actualizar la compra. El ID ${id_compra} no fue encontrado.`,
+      });
+    }
+    res.status(200).json({
+      mensaje: `Compra con ID ${id_compra} actualizada correctamente.`
+    });
+  } catch (error) {
+    return res.status(500).json({
+      mensaje: 'Ha ocurrido un error al actualizar la compra.',
+      error: error
+    });
+  }
+};
