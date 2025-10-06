@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { obtenerProveedores, obtenerProveedor, registrarProveedor, eliminarProveedor } from "../controllers/proveedores.controller.js";
+import {
+  obtenerProveedores,
+  obtenerProveedor,
+  registrarProveedor,
+  eliminarProveedor,
+  actualizarProveedoresPatch,
+} from "../controllers/proveedores.controller.js";
 
 const router = Router();
 
@@ -7,12 +13,17 @@ const router = Router();
 router.get("/proveedor", obtenerProveedores);
 
 // Ruta para obtener un cliente por su ID
-router.get('/proveedores/:id_proveedor', obtenerProveedor);
+router.get("/proveedores/:id_proveedor", obtenerProveedor);
 
 // Ruta para registrar una nueva Categoría
-router.post('/registrarProveedores', registrarProveedor);
+router.post("/registrarProveedores", registrarProveedor);
 
 //ruta para eliminar una venta por su ID
-router.delete('/eliminarproveedores/:id_proveedor', eliminarProveedor);
+router.delete("/eliminarproveedores/:id_proveedor", eliminarProveedor);
+
+router.delete(
+  "/actualizarproveedores/:id_proveedor",
+  actualizarProveedoresPatch
+);
 
 export default router;

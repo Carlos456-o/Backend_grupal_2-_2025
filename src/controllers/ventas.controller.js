@@ -77,3 +77,27 @@ export const eliminarVenta = async (req, res) => {
     });
   }
 };
+
+export const actualizarVentasPatch = async (req, res) => {
+  try {
+    const id_venta = req.params.id_venta;
+    const { Fecha_Venta, ID_Cliente} = req.body;
+    const [result] = await pool.query(
+      'UPDATE Ventas SET Fecha_Venta = IFNULL(?, Fecha_Venta), ID_Cliente = IFNULL(?, ID_Cliente) WHERE id_venta = ?',
+      [Fecha_Venta, ID_Cliente, id_venta]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        mensaje: `Error al actualizar la Venta. El ID ${id_venta} no fue encontrado.`,
+      });
+    }
+    res.status(200).json({
+      mensaje: `Venta con ID ${id_venta} actualizada correctamente.`
+    });
+  } catch (error) {
+    return res.status(500).json({
+      mensaje: 'Ha ocurrido un error al actualizar la Venta.',
+      error: error
+    });
+  }
+};

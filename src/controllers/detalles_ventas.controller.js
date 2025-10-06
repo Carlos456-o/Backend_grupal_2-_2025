@@ -83,3 +83,31 @@ export const eliminarDetalleVenta = async (req, res) => {
     });
   }
 };
+
+export const actualizarDetalleVentaPatch = async (req, res) => {
+  try {
+    const ID_Detalle_ven = req.params.ID_Detalle_ven;
+    const { ID_Venta
+      , ID_Producto,
+      Cantidad_ven } = req.body;
+    const [result] = await pool.query(
+      'UPDATE Detalle_Ventas SET ID_Venta = IFNULL(?, ID_Venta), ID_Producto = IFNULL(?, ID_Producto), Cantidad_ven = IFNULL(?, Cantidad_ven), Precio_Ven = IFNULL(?, Precio_Ven) WHERE ID_Detalle_ven = ?',
+      [ID_Venta
+        , ID_Producto, Cantidad_ven, Precio_Ven, ID_Detalle_ven]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        mensaje: `Error al actualizar el Detalle. El ID ${ID_Detalle_ven} no fue encontrado.`,
+      });
+    }
+    res.status(200).json({
+    mensaje: `Detalle con ID ${ID_Detalle_ven} actualizado correctamente.`
+    });
+  }
+  catch (error) {
+    return res.status(500).json({
+      mensaje: 'Ha ocurrido un error al actualizar el Detalle.',
+      error: error
+    });
+  }
+};
