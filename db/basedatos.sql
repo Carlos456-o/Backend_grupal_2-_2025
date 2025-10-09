@@ -308,22 +308,41 @@ BEGIN
 END;
 //
 DELIMITER ;
+-- Crear roles para la base de datos
+CREATE ROLE 'Admin', 'Empleado', 'Cliente';
+
+-- Asignar privilegios al rol Admin (acceso total)
+GRANT ALL PRIVILEGES ON Moto_Repuesto.* TO 'Admin' WITH GRANT OPTION; -- este es el permiso de administrador
 
 
-CREATE USER 'admin_moto'@'localhost' IDENTIFIED BY 'Admin123';
-GRANT ALL PRIVILEGES ON Moto_Repuesto.* TO 'admin_moto'@'localhost' WITH GRANT OPTION;
-FLUSH PRIVILEGES;
+-- Asignar privilegios al rol Empleado
+GRANT SELECT, INSERT, UPDATE, DELETE ON Moto_Repuesto.Ventas TO 'Empleado';
+GRANT SELECT, INSERT, UPDATE, DELETE ON Moto_Repuesto.Detalle_Ventas TO 'Empleado';
+GRANT SELECT ON Moto_Repuesto.Productos TO 'Empleado';
+GRANT SELECT ON Moto_Repuesto.Clientes TO 'Empleado'; -- solo lectura este 
 
+-- Asignar privilegios al rol Cliente (solo consulta de productos)
+GRANT SELECT ON Moto_Repuesto.Productos TO 'Cliente';  -- solo lectura (el cliente solo puede ver tablas)
+
+-- ======================================
+-- USUARIOS Y ASIGNACIÓN DE ROLES
+-- ======================================
+
+CREATE USER 'admin_moto'@'localhost' IDENTIFIED BY 'Admin123'; -- el nombre del administrador
+GRANT 'Admin' TO 'admin_moto'@'localhost';
+SET DEFAULT ROLE 'Admin' TO 'admin_moto'@'localhost';
 
 CREATE USER 'empleado_moto'@'localhost' IDENTIFIED BY 'Empleado123';
-GRANT SELECT, UPDATE ON Moto_Repuesto.Ventas TO 'empleado_moto'@'localhost';
-GRANT SELECT, UPDATE ON Moto_Repuesto.Detalle_Ventas TO 'empleado_moto'@'localhost';
-FLUSH PRIVILEGES;
+GRANT 'Empleado' TO 'empleado_moto'@'localhost';
+SET DEFAULT ROLE 'Empleado' TO 'empleado_moto'@'localhost';
 
+CREATE USER 'cliente_moto'@'localhost' IDENTIFIED BY 'Cliente123'; -- Grant roles usuario
+GRANT 'Cliente' TO 'cliente_moto'@'localhost';
+SET DEFAULT ROLE 'Cliente' TO 'cliente_moto'@'localhost';
 
-CREATE USER 'cliente_moto'@'localhost' IDENTIFIED BY 'Cliente123';
-GRANT SELECT ON Moto_Repuesto.Productos TO 'cliente_moto'@'localhost';
-FLUSH PRIVILEGES;
+-- Aplicar los cambios
+FLUSH PRIVILEGES; -- se aplica los privilegios
+
 
 INSERT INTO Usuarios (usuario, contraseña) VALUES
 ('eli', 'eli2025'),
