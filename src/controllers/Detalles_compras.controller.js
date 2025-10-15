@@ -3,7 +3,7 @@
   // Obtener todas las detalles de compras 
   export const obtenerDetallesCompras = async (req, res) => {
     try {
-      const [result] = await pool.query("SELECT * FROM Detalle_Compras");
+      const [result] = await pool.query("SELECT * FROM ID_Detalles_Com");
       res.json(result);
     } catch (error) {
       return res.status(500).json({
@@ -19,7 +19,7 @@
     try {
       const ID_Detalles_Com = req.params.ID_Detalles_Com;
       const [result] = await pool.query(
-        "SELECT * FROM Detalle_Compras WHERE ID_Detales_Com= ?",
+        "SELECT * FROM Detalle_Compras WHERE ID_Detalles_Com= ?",
         [ID_Detalles_Com]
       );  
       if (result.length <= 0) {
@@ -36,34 +36,34 @@
   };
 
   // Registrar un nuevo detalle  Detalle de Compra
-  export const registrarCompra = async (req, res) => {
+  export const registrarDetalleCompra = async (req, res) => {
     try {
       const { ID_Compra, ID_Producto, Cantidad_com, Precio_Com } = req.body;
       const [result] = await pool.query(
-        'INSERT INTO compras ( ID_Compra, ID_Producto,Cantidad_com, Precio_Com  ) VALUES (?, ?, ?)',
-        [ ID_Compra, ID_Producto,Cantidad_com, Precio_Com  ]
+        'INSERT INTO Detalle_Compras ( ID_Compra, ID_Producto, Cantidad_com, Precio_Com) VALUES (?, ?, ?, ?)',
+        [ ID_Compra, ID_Producto, Cantidad_com, Precio_Com]
       );
-      res.status(201).json({ id_compra: result.insertId });
+      res.status(201).json({ ID_Detalles_Com: result.insertId });
     } catch (error) {
       return res.status(500).json({
-        mensaje: 'Ha ocurrido un error al registrar el detalle de compra.',
+        mensaje: 'Ha ocurrido un error al registrar el detalle compra.',
         error: error
       });
-    }   
+    }
   };
 
    // Eliminar un detalle de compra por su ID
 export const eliminarDetalleCompra = async (req, res) => {
   try {
-    const id_detalle_compra = req.params.id_detalle_compra;
+    const ID_Detalles_Com = req.params.ID_Detalles_Com;
     const [result] = await pool.query(
-      'DELETE FROM Detalles_Compras WHERE id_detalle_compra = ?',
-      [id_detalle_compra]
+      'DELETE FROM Detalle_Compras WHERE ID_Detalles_Com = ?',
+      [ID_Detalles_Com]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
-        mensaje: `Error al eliminar el detalle compra. El ID ${id_detalle_compra} no fue encontrado.`
+        mensaje: `Error al eliminar el detalle compra. El ID ${ID_Detalles_Com} no fue encontrado.`
       });
     }
 
@@ -81,19 +81,19 @@ export const eliminarDetalleCompra = async (req, res) => {
 //Controlador para actualizar parcialmente un detalle de compra por su ID
 export const actualizarParcialDetalleCompra = async (req, res) => {
   try {
-    const id_detalle_compra = req.params.id_detalle_com;
-    const { id_compra, id_producto, cantidad_com, precio_com } = req.body;
+    const ID_Detalles_Com = req.params.id_detalle_com;
+    const { ID_Compra, ID_Producto, Cantidad_com, Precio_Com } = req.body;
     const [result] = await pool.query(
-      'UPDATE detalles_compras SET id_compra = IFNULL(?, id_compra), id_producto = IFNULL(?, id_producto), cantidad_com = IFNULL(?, cantidad_com), precio_com = IFNULL(?, precio_com) WHERE id_detalle_compra = ?',
-      [id_compra, id_producto, cantidad_com, precio_com, id_detalle_compra]
+      'UPDATE Detalle_Compras SET id_compra = IFNULL(?, ID_Compra), ID_Producto = IFNULL(?, ID_Producto), Cantidad_com = IFNULL(?, Cantidad_com), Precio_Com = IFNULL(?, Precio_Com) WHERE ID_Detalles_Com = ?',
+      [ID_Compra, ID_Producto, Cantidad_com, Precio_Com, ID_Detalles_Com]
     );
     if (result.affectedRows === 0) {
       return res.status(404).json({
-        mensaje: `Error al actualizar el detalle compra. El ID ${id_detalle_compra} no fue encontrado.`,
+        mensaje: `Error al actualizar el detalle compra. El ID ${ID_Detalles_Com} no fue encontrado.`,
       });
     }
     res.status(200).json({
-      mensaje: `Detalle de compra con ID ${id_detalle_compra} actualizada correctamente.`
+      mensaje: `Detalle de compra con ID ${ID_Detalles_Com} actualizada correctamente.`
     });
   } catch (error) {
     return res.status(500).json({

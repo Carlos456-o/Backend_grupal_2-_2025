@@ -39,7 +39,7 @@ export const registrarProveedor = async (req, res) => {
   try {
     const { Nombre_Prov,  Contacto, Email } = req.body;
     const [result] = await pool.query(
-      'INSERT INTO Proveedor ( Nombre_Prov, Contacto, Email ) VALUES (?, ?, ?, ?, ?, ?)',
+      'INSERT INTO Proveedores ( Nombre_Prov, Contacto, Email ) VALUES (?, ?, ?, ?, ?, ?)',
       [ Nombre_Prov, Contacto, Email ]
     );
     res.status(201).json({ ID_Proveedor: result.insertId });
@@ -56,13 +56,13 @@ export const eliminarProveedor = async (req, res) => {
   try {
     const ID_Proveedor = req.params.ID_Proveedor;
     const [result] = await pool.query(
-      'DELETE FROM Proveedor WHERE ID_Proveedor = ?',
+      'DELETE FROM Proveedores WHERE ID_Proveedor = ?',
       [ID_Proveedor]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
-        mensaje: `Error al eliminar el proveedor. El ID ${id_venta} no fue encontrado.`
+        mensaje: `Error al eliminar el proveedor. El ID ${ID_Proveedor} no fue encontrado.`
       });
     }
 

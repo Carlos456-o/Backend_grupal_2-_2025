@@ -62,15 +62,15 @@
     // Eliminar un detalle de compra por su ID
 export const eliminarDetalleVenta = async (req, res) => {
   try {
-    const id_detalle_venta = req.params.id_detalle_venta;
+    const ID_Detalle_ven = req.params.ID_Detalle_ven;
     const [result] = await pool.query(
-      'DELETE FROM Detalles_Ventas WHERE id_detalle_venta = ?',
-      [id_detalle_venta]
+      'DELETE FROM Detalles_Ventas WHERE ID_Detalle_ven = ?',
+      [ID_Detalle_ven]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
-        mensaje: `Error al eliminar el detalle venta. El ID ${id_detalle_venta} no fue encontrado.`
+        mensaje: `Error al eliminar el detalle venta. El ID ${ID_Detalle_ven} no fue encontrado.`
       });
     }
 

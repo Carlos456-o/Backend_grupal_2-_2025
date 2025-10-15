@@ -13,13 +13,13 @@ const router = Router();
 router.get("/proveedores", obtenerProveedores);
 
 // Ruta para obtener un cliente por su ID
-router.get("/proveedor/:id_proveedor", obtenerProveedor);
+router.get("/proveedor/:ID_Proveedor", obtenerProveedor);
 
 // Ruta para registrar una nueva Categoría
 router.post("/registrarProveedores", registrarProveedor);
 
 //ruta para eliminar una venta por su ID
-router.delete("/eliminarproveedores/:id_proveedor", eliminarProveedor);
+router.delete("/eliminarproveedores/:ID_Proveedor", eliminarProveedor);
 
 router.delete(
   "/actualizarproveedores/:id_proveedor",

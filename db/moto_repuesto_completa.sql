@@ -1,7 +1,5 @@
 
 -- ======================================================
--- BASE DE DATOS COMPLETA Y CORREGIDA: Moto_Repuesto
--- Archivo: moto_repuesto_completa.sql
 -- Contiene: estructura completa, datos, triggers, procedimientos, funciones y vistas.
 -- ======================================================
 
@@ -519,36 +517,6 @@ BEGIN
 END //
 
 
-CREATE PROCEDURE RegistrarVenta(
-    IN p_Fecha DATE,
-    IN p_ID_Cliente INT,
-    IN p_ID_Producto INT,
-    IN p_Cantidad INT,
-    IN p_Precio DECIMAL(10,2)
-)
-BEGIN
-    DECLARE nueva_venta_id INT;
-    INSERT INTO Ventas (Fecha_Venta, ID_Cliente)
-    VALUES (p_Fecha, p_ID_Cliente);
-    SET nueva_venta_id = LAST_INSERT_ID();
-    -- antes de insertar el detalle, validar stock
-    DECLARE stock_actual INT;
-    SELECT Cantidad INTO stock_actual FROM Productos WHERE ID_Producto = p_ID_Producto FOR UPDATE;
-    IF stock_actual IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Producto no existe';
-    ELSEIF stock_actual < p_Cantidad THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Stock insuficiente para la venta';
-    ELSE
-        INSERT INTO Detalle_Ventas (ID_Venta, ID_Producto, Cantidad_ven, Precio_Ven)
-        VALUES (nueva_venta_id, p_ID_Producto, p_Cantidad, p_Precio);
-        UPDATE Productos
-        SET Cantidad = Cantidad - p_Cantidad,
-            Disponible = (Cantidad - p_Cantidad) > 0
-        WHERE ID_Producto = p_ID_Producto;
-    END IF;
-END //
-
-
 CREATE PROCEDURE EliminarCliente(
     IN p_ID_Cliente INT
 )
@@ -950,7 +918,7 @@ INSERT INTO Proveedores (Nombre_Prov, Contacto, Email) VALUES
 ('Repuestos Top', '3178901234', 'ventas@repuestostop.com'),
 ('MotoEnergy', '3189012345', 'info@motoenergy.com'),
 ('Fast Moto', '3190123456', 'soporte@fastmoto.com'),
-('MotoPremium', '3201234567', 'ventas@motopremium.com';
+('MotoPremium', '3201234567', 'ventas@motopremium.com');
 
 -- Clientes (original + 20)
 INSERT INTO Clientes (Nombre1, Nombre2, Apellidos1, Apellidos2, Cedula, Telefono) VALUES

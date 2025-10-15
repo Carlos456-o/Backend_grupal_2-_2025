@@ -14,8 +14,8 @@ router.get("/venta/:ID_Venta", obtenerVenta);
 router.post('/registrarVenta', registrarVenta);
 
 //ruta para eliminar una venta por su ID
-router.delete('/eliminarventa/:id_venta', eliminarVenta);
+router.delete('/eliminarventa/:ID_Venta', eliminarVenta);
 
-router.delete('/actualizarventa/:id_venta', actualizarVentasPatch);
+router.delete('/actualizarventa/:ID_Venta', actualizarVentasPatch);
 
 export default router;

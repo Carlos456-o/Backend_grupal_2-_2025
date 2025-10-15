@@ -56,15 +56,15 @@ export const obtenerVentas = async (req, res) => {
   // Eliminar una venta por su ID
 export const eliminarVenta = async (req, res) => {
   try {
-    const id_venta = req.params.id_venta;
+    const ID_Venta = req.params.ID_Venta;
     const [result] = await pool.query(
-      'DELETE FROM Ventas WHERE id_venta = ?',
-      [id_venta]
+      'DELETE FROM Ventas WHERE ID_Venta = ?',
+      [ID_Venta]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
-        mensaje: `Error al eliminar la venta. El ID ${id_venta} no fue encontrado.`
+        mensaje: `Error al eliminar la venta. El ID ${ID_Venta} no fue encontrado.`
       });
     }
 
@@ -80,19 +80,19 @@ export const eliminarVenta = async (req, res) => {
 
 export const actualizarVentasPatch = async (req, res) => {
   try {
-    const id_venta = req.params.id_venta;
+    const ID_Venta = req.params.ID_Venta;
     const { Fecha_Venta, ID_Cliente} = req.body;
     const [result] = await pool.query(
-      'UPDATE Ventas SET Fecha_Venta = IFNULL(?, Fecha_Venta), ID_Cliente = IFNULL(?, ID_Cliente) WHERE id_venta = ?',
-      [Fecha_Venta, ID_Cliente, id_venta]
+      'UPDATE Ventas SET Fecha_Venta = IFNULL(?, Fecha_Venta), ID_Cliente = IFNULL(?, ID_Cliente) WHERE ID_Venta = ?',
+      [Fecha_Venta, ID_Cliente, ID_Venta]
     );
     if (result.affectedRows === 0) {
       return res.status(404).json({
-        mensaje: `Error al actualizar la Venta. El ID ${id_venta} no fue encontrado.`,
+        mensaje: `Error al actualizar la Venta. El ID ${ID_Venta} no fue encontrado.`,
       });
     }
     res.status(200).json({
-      mensaje: `Venta con ID ${id_venta} actualizada correctamente.`
+      mensaje: `Venta con ID ${ID_Venta} actualizada correctamente.`
     });
   } catch (error) {
     return res.status(500).json({

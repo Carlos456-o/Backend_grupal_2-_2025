@@ -5,10 +5,10 @@ import { obtenerProductos, obtenerProducto, registrarProducto, eliminarProducto,
 const router = Router();
 
 // Ruta para obtener todos los productos
-router.get("/producto", obtenerProducto);
+router.get("/productos", obtenerProductos);
 
 // Ruta para obtener un cliente por su ID
-router.get("/productos/:ID_Producto", obtenerProductos);
+router.get("/producto/:ID_Producto", obtenerProducto);
 
 // Ruta para registrar una nueva Categoría
 router.post('/registrarproducto', registrarProducto);
