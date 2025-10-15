@@ -19,7 +19,7 @@ export const obtenerCliente = async (req, res) => {
     const ID_Cliente = req.params.ID_Cliente;
     const [result] = await pool.query(
       "SELECT * FROM Clientes WHERE ID_Cliente= ?",
-      [id_cliente]
+      [ID_Cliente]
     );
     if (result.length <= 0) {
       return res.status(404).json({
