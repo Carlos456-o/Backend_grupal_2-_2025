@@ -10,10 +10,10 @@ import {
 const router = Router();
 
 // Ruta para obtener todos los detalles de ventas
-router.get("/proveedor", obtenerProveedores);
+router.get("/proveedores", obtenerProveedores);
 
 // Ruta para obtener un cliente por su ID
-router.get("/proveedores/:id_proveedor", obtenerProveedor);
+router.get("/proveedor/:id_proveedor", obtenerProveedor);
 
 // Ruta para registrar una nueva Categoría
 router.post("/registrarProveedores", registrarProveedor);

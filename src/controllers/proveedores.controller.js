@@ -18,7 +18,7 @@ export const obtenerProveedor = async (req, res) => {
   try {
     const ID_Proveedor = req.params.ID_Proveedor;
     const [result] = await pool.query(
-      "SELECT * FROM Proveedor WHERE ID_Proveedor= ?",
+      "SELECT * FROM Proveedores WHERE ID_Proveedor= ?",
       [ID_Proveedor]
     );
     if (result.length <= 0) {
