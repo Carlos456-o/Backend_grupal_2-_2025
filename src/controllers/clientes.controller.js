@@ -39,10 +39,10 @@ export const registrarCliente = async (req, res) => {
   try {
     const { Nombre1, Nombre2, Apellidos1, Apellidos2, Cedula, Telefono } = req.body;
     const [result] = await pool.query(
-      'INSERT INTO clientes ( Nombre1, Nombre2, Apellidos1, Apellidos2, Cedula, Telefono ) VALUES (?, ?, ?, ?, ?, ?)',
+      'INSERT INTO Clientes ( Nombre1, Nombre2, Apellidos1, Apellidos2, Cedula, Telefono ) VALUES (?, ?, ?, ?, ?, ?)',
       [ Nombre1, Nombre2, Apellidos1, Apellidos2, Cedula, Telefono ]
     );
-    res.status(201).json({ id_cliente: result.insertId });
+    res.status(201).json({ ID_Cliente: result.insertId });
   } catch (error) {
     return res.status(500).json({
       mensaje: 'Ha ocurrido un error al registrar el cliente.',
@@ -54,15 +54,15 @@ export const registrarCliente = async (req, res) => {
 // Eliminar una categoría por su ID
 export const eliminarCliente = async (req, res) => {
   try {
-    const id_cliente = req.params.id_cliente;
+    const ID_Cliente = req.params.ID_Cliente;
     const [result] = await pool.query(
-      'DELETE FROM Clientes WHERE id_cliente = ?',
-      [id_cliente]
+      'DELETE FROM Clientes WHERE ID_Cliente = ?',
+      [ID_Cliente]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
-        mensaje: `Error al eliminar el cliente. El ID ${id_cliente} no fue encontrado.`
+        mensaje: `Error al eliminar el cliente. El ID ${ID_Cliente} no fue encontrado.`
       });
     }
 
@@ -79,24 +79,24 @@ export const eliminarCliente = async (req, res) => {
 //Controlador para actualizar un cliente por su ID
 export const actualizarClientePatch = async (req, res) => {
   try {
-    const id_cliente = req.params.id_cliente;
+    const ID_Cliente = req.params.ID_Cliente;
     const { Nombre1
       , Nombre2,
       Apellidos1,
       Apellidos2, Cedula
       ,Telefono } = req.body;
     const [result] = await pool.query(
-      'UPDATE clientes SET Nombre1 = IFNULL(?, Nombre1), Nombre2 = IFNULL(?, Nombre2), Apellidos1 = IFNULL(?, Apellidos1), Apellidos2 = IFNULL(?, Apellidos2), cedula = IFNULL(?, cedula), telefono = IFNULL(?, telefono) WHERE id_cliente = ?',
+      'UPDATE clientes SET Nombre1 = IFNULL(?, Nombre1), Nombre2 = IFNULL(?, Nombre2), Apellidos1 = IFNULL(?, Apellidos1), Apellidos2 = IFNULL(?, Apellidos2), Cedula = IFNULL(?, Cedula), Telefono = IFNULL(?, Telefono) WHERE ID_Cliente = ?',
       [Nombre1
-        , Nombre2, Apellidos1, Apellidos2, Cedula, Telefono, id_cliente]
+        , Nombre2, Apellidos1, Apellidos2, Cedula, Telefono, ID_Cliente]
     );
     if (result.affectedRows === 0) {
       return res.status(404).json({
-        mensaje: `Error al actualizar el Cliente. El ID ${id_cliente} no fue encontrado.`,
+        mensaje: `Error al actualizar el Cliente. El ID ${ID_Cliente} no fue encontrado.`,
       });
     }
     res.status(200).json({
-    mensaje: `Cliente con ID ${id_cliente} actualizado correctamente.`
+    mensaje: `Cliente con ID ${ID_Cliente} actualizado correctamente.`
     });
   }
   catch (error) {

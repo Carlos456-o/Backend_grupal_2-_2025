@@ -39,7 +39,7 @@ export const obtenerCompra = async (req, res) => {
     try {
       const { Fecha_compra, Cantidad, ID_Proveedor } = req.body;
       const [result] = await pool.query(
-        "INSERT INTO compras (Fecha_compra, Cantidad, ID_Proveedor) VALUES (?, ?, ?)",
+        "INSERT INTO Compras (Fecha_compra, Cantidad, ID_Proveedor) VALUES (?, ?, ?)",
         [Fecha_compra, Cantidad, ID_Proveedor]  
       );
       res.json({
@@ -59,15 +59,15 @@ export const obtenerCompra = async (req, res) => {
   // Eliminar una compra por su ID
 export const eliminarCompra = async (req, res) => {
   try {
-    const id_compra = req.params.id_compra;
+    const ID_Compra = req.params.ID_Compra;
     const [result] = await pool.query(
-      'DELETE FROM Compras WHERE id_compra = ?',
-      [id_compra]
+      'DELETE FROM Compras WHERE ID_Compra = ?',
+      [ID_Compra]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
-        mensaje: `Error al eliminar la compra. El ID ${id_compra} no fue encontrado.`
+        mensaje: `Error al eliminar la compra. El ID ${ID_Compra} no fue encontrado.`
       });
     }
 
@@ -84,19 +84,19 @@ export const eliminarCompra = async (req, res) => {
 //Controlador para actualizar parcialmente una compra por su ID
 export const actualizarParcialCompra = async (req, res) => {
   try {
-    const id_compra = req.params.id_compra;
-    const { fecha_compra, cantidad, ID_Proveedor } = req.body;
+    const ID_Compra = req.params.ID_Compra;
+    const { Fecha_compra, Cantidad, ID_Proveedor } = req.body;
     const [result] = await pool.query(
-      'UPDATE Compras SET id_compra = IFNULL(?, id_compra), fecha_compra = IFNULL(?, fecha_compra), cantidad = IFNULL(?, cantidad),  Id_Proveedor = IFNULL(?, Id_Proveedor) WHERE id_compra = ?',
-      [id_compra, fecha_compra, cantidad, ID_Proveedor]
+      'UPDATE Compras SET ID_Compra = IFNULL(?, ID_Compra), Fecha_compra = IFNULL(?, Fecha_compra), Cantidad = IFNULL(?, Cantidad),  ID_Proveedor = IFNULL(?, ID_Proveedor) WHERE ID_Compra = ?',
+      [ID_Compra, Fecha_compra, Cantidad, ID_Proveedor]
     );
     if (result.affectedRows === 0) {
       return res.status(404).json({
-        mensaje: `Error al actualizar la compra. El ID ${id_compra} no fue encontrado.`,
+        mensaje: `Error al actualizar la compra. El ID ${ID_Compra} no fue encontrado.`,
       });
     }
     res.status(200).json({
-      mensaje: `Compra con ID ${id_compra} actualizada correctamente.`
+      mensaje: `Compra con ID ${ID_Compra} actualizada correctamente.`
     });
   } catch (error) {
     return res.status(500).json({
