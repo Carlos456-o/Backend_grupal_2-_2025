@@ -1,8 +1,4 @@
 
--- ======================================================
--- Contiene: estructura completa, datos, triggers, procedimientos, funciones y vistas.
--- ======================================================
-
 DROP DATABASE IF EXISTS Moto_Repuesto;
 CREATE DATABASE IF NOT EXISTS Moto_Repuesto;
 USE Moto_Repuesto;

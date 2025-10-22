@@ -83,7 +83,7 @@ export const actualizarVentasPatch = async (req, res) => {
     const ID_Venta = req.params.ID_Venta;
     const { Fecha_Venta, ID_Cliente} = req.body;
     const [result] = await pool.query(
-      'UPDATE Ventas SET Fecha_Venta = IFNULL(?, Fecha_Venta), ID_Cliente = IFNULL(?, ID_Cliente) WHERE ID_Venta = ?',
+      'UPDATE Ventas SET Fecha_Venta = (?, Fecha_Venta), ID_Cliente = IFNULL(?, ID_Cliente) WHERE ID_Venta = ?',
       [Fecha_Venta, ID_Cliente, ID_Venta]
     );
     if (result.affectedRows === 0) {
