@@ -1,4 +1,5 @@
 
+
 DROP DATABASE IF EXISTS Moto_Repuesto;
 CREATE DATABASE IF NOT EXISTS Moto_Repuesto;
 USE Moto_Repuesto;
@@ -354,6 +355,42 @@ BEGIN
             CONCAT('Se eliminó detalle venta ID ', OLD.ID_Detalle_ven, ' producto ID ', OLD.ID_Producto, ' (+', OLD.Cantidad_ven, ')'));
 END;
 //
+
+DELIMITER //
+
+CREATE TRIGGER trg_actualizar_inventario
+AFTER INSERT ON Detalle_Ventas
+FOR EACH ROW
+BEGIN
+
+UPDATE Productos
+SET Cantidad = Cantidad NEW.Cantidad_ven
+WHERE ID_Producto = NEW.ID_Producto;
+
+UPDATE Productos
+SET Disponible = FALSE
+WHERE ID_Producto = NEW.ID_Producto AND Cantidad <= 0;
+END;
+DELIMITER //
+
+DELIMITER //
+
+CREATE TRIGGER trg_validar_stock
+BEFORE INSERT ON Detalle_Ventas
+FOR EACH ROW
+BEGIN
+DECLARE stock_actual INT;
+
+
+SELECT Cantidad INTO stock_actual
+FROM Productos
+WHERE ID_Producto = NEW.ID_Producto;
+
+IF stock_actual < NEW.Cantidad_ven THEN
+SIGNAL SQLSTATE '45000'
+SET MESSAGE_TEXT = 'Error: Stock insuficiente para realizar la venta.';
+END IF;
+END;
 
 DELIMITER ;
 
