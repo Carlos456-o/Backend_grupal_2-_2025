@@ -16,6 +16,6 @@ router.post('/registrarproducto', registrarProducto);
 //ruta para eliminar un producto por su ID
 router.delete('/eliminarproducto/:ID_Producto', eliminarProducto);
 
-router.delete('/actualizarproducto/:ID_Producto', actualizarProductoPatch);
+router.patch('/actualizarproducto/:ID_Producto', actualizarProductoPatch);
 
 export default router;

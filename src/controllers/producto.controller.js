@@ -35,22 +35,34 @@
     }
   };
 
-   // Registrar un nuevo Producto
-  export const registrarProducto = async (req, res) => {
-    try {
-      const { Nombre_P, Descripcion, Cantidad, Preciodecom, Preciodeven } = req.body;
-      const [result] = await pool.query(
-        'INSERT INTO productos ( Nombre_P, Descripcion, Cantidad, Preciodecom, Preciodeven) VALUES (?, ?, ?, ?, ?, ?)',
-        [ Nombre_P, Descripcion, Cantidad, Preciodecom, Preciodeven]
-      );
-      res.status(201).json({ id_producto: result.insertId });
-    } catch (error) {
-      return res.status(500).json({
-        mensaje: 'Ha ocurrido un error al registrar el producto.',
-        error: error
-      });
-    }
-  };
+// ➕ Registrar nuevo producto
+export const registrarProducto = async (req, res) => {
+  const { Nombre_P, Descripcion, Cantidad, Disponible, PrecioCompra, PrecioVenta } = req.body;
+
+  if (!Nombre_P || PrecioCompra == null || PrecioVenta == null) {
+    return res.status(400).json({ mensaje: "Faltan campos obligatorios" });
+  }
+
+  try {
+    const sql = `
+      INSERT INTO Productos (Nombre_P, Descripcion, Cantidad, Disponible, PrecioCompra, PrecioVenta)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `;
+    const [result] = await conexion.query(sql, [
+      Nombre_P,
+      Descripcion || null,
+      Cantidad || 0,
+      Disponible ?? true,
+      PrecioCompra,
+      PrecioVenta
+    ]);
+
+    res.status(201).json({ mensaje: "Producto registrado correctamente", id: result.insertId });
+  } catch (error) {
+    console.error("Error al registrar producto:", error);
+    res.status(500).json({ mensaje: "Error al registrar producto" });
+  }
+}
 
    // Eliminar un detalle de compra por su ID
 export const eliminarProducto = async (req, res) => {
