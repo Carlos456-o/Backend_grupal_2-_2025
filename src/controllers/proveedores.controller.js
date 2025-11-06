@@ -78,24 +78,20 @@ export const eliminarProveedor = async (req, res) => {
 
 export const actualizarProveedoresPatch = async (req, res) => {
   try {
-    const ID_Proveedor = req.params.ID_Proveedor;
-    const { Nombre_Prov, Contacto, Email} = req.body;
+    const { ID_Proveedor } = req.params;
+    const datos = req.body;
+
     const [result] = await pool.query(
-      'UPDATE Proveedores SET Nombre_Prov = IFNULL(?, Nombre_Prov), Contacto = IFNULL(?, Contacto), Email = IFNULL(?, Email) WHERE ID_Proveedor = ?',
-      [Nombre_Prov, Contacto, Email, ID_Proveedor]
+      'UPDATE Proveedores SET ? WHERE ID_Proveedor = ?',
+      [datos, ID_Proveedor]
     );
+
     if (result.affectedRows === 0) {
-      return res.status(404).json({
-        mensaje: `Error al actualizar el Proveedor. El ID ${ID_Proveedor} no fue encontrado.`,
-      });
+      return res.status(404).json({ mensaje: `Producto con ID ${ID_Proveedor} no encontrada.` });
     }
-    res.status(200).json({
-      mensaje: `Proveedor con ID ${ID_Proveedor} actualizada correctamente.`
-    });
+
+    res.status(200).json({ mensaje: `Producto con ID ${ID_Proveedor} actualizada.` });
   } catch (error) {
-    return res.status(500).json({
-      mensaje: 'Ha ocurrido un error al actualizar la Proveedor.',
-      error: error
-    });
+    res.status(500).json({ mensaje: 'Error al actualizar el producto.', error });
   }
 };

@@ -1,8 +1,6 @@
 
 import { Router } from "express";
-import { obtenerCompras, obtenerCompra, registrarCompra, eliminarCompra,
-    actualizarParcialCompra
- } from "../controllers/compra.controller.js";
+import { obtenerCompras, obtenerCompra, registrarCompra, eliminarCompra, actualizarParcialCompra} from "../controllers/compra.controller.js";
 
 const router = Router();
 

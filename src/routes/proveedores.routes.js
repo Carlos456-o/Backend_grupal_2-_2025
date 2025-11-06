@@ -22,8 +22,7 @@ router.post("/registrarProveedores", registrarProveedor);
 router.delete("/eliminarproveedores/:ID_Proveedor", eliminarProveedor);
 
 router.delete(
-  "/actualizarproveedores/:id_proveedor",
-  actualizarProveedoresPatch
+  "/actualizarproveedores/:id_proveedor", actualizarProveedoresPatch
 );
 
 export default router;

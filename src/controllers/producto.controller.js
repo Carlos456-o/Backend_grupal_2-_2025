@@ -79,27 +79,20 @@ export const eliminarProducto = async (req, res) => {
 
 export const actualizarProductoPatch = async (req, res) => {
   try {
-    const ID_Producto = req.params.ID_Producto;
-    const { Nombre_P
-      , Descripcion, Cantidad, Disponible, PrecioCompra, PrecioVenta} = req.body;
+    const { ID_Producto } = req.params;
+    const datos = req.body;
+
     const [result] = await pool.query(
-      'UPDATE Productos SET Nombre_P = IFNULL(?, Nombre_P), Descripcion = IFNULL(?, Descripcion), Cantidad = IFNULL(?, Cantidad), Disponible = IFNULL(?, Disponible), PrecioCompra = IFNULL(?, PrecioCompra), PrecioVenta = IFNULL(?, PrecioVenta) WHERE ID_Producto = ?',
-      [Nombre_P
-        , Descripcion, Cantidad, Disponible, PrecioCompra, PrecioVenta, ID_Producto]
+      'UPDATE Productos SET ? WHERE ID_Producto = ?',
+      [datos, ID_Producto]
     );
+
     if (result.affectedRows === 0) {
-      return res.status(404).json({
-        mensaje: `Error al actualizar el Producto. El ID ${ID_Producto} no fue encontrado.`,
-      });
+      return res.status(404).json({ mensaje: `Producto con ID ${ID_Producto} no encontrada.` });
     }
-    res.status(200).json({
-    mensaje: `Producto con ID ${ID_Producto} actualizado correctamente.`
-    });
-  }
-  catch (error) {
-    return res.status(500).json({
-      mensaje: 'Ha ocurrido un error al actualizar el Producto.',
-      error: error
-    });
+
+    res.status(200).json({ mensaje: `Producto con ID ${ID_Producto} actualizada.` });
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error al actualizar el producto.', error });
   }
 };

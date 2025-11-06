@@ -76,33 +76,23 @@ export const eliminarCliente = async (req, res) => {
   }
 };
 
-//Controlador para actualizar un cliente por su ID
+
 export const actualizarClientePatch = async (req, res) => {
   try {
-    const ID_Cliente = req.params.ID_Cliente;
-    const { Nombre1
-      , Nombre2,
-      Apellidos1,
-      Apellidos2, Cedula
-      ,Telefono } = req.body;
+    const { ID_Cliente } = req.params;
+    const datos = req.body;
+
     const [result] = await pool.query(
-      'UPDATE clientes SET Nombre1 = IFNULL(?, Nombre1), Nombre2 = IFNULL(?, Nombre2), Apellidos1 = IFNULL(?, Apellidos1), Apellidos2 = IFNULL(?, Apellidos2), Cedula = IFNULL(?, Cedula), Telefono = IFNULL(?, Telefono) WHERE ID_Cliente = ?',
-      [Nombre1
-        , Nombre2, Apellidos1, Apellidos2, Cedula, Telefono, ID_Cliente]
+      'UPDATE Clientes SET ? WHERE ID_Cliente = ?',
+      [datos, ID_Cliente]
     );
+
     if (result.affectedRows === 0) {
-      return res.status(404).json({
-        mensaje: `Error al actualizar el Cliente. El ID ${ID_Cliente} no fue encontrado.`,
-      });
+      return res.status(404).json({ mensaje: `Cliente con ID ${ID_Cliente} no encontrada.` });
     }
-    res.status(200).json({
-    mensaje: `Cliente con ID ${ID_Cliente} actualizado correctamente.`
-    });
-  }
-  catch (error) {
-    return res.status(500).json({
-      mensaje: 'Ha ocurrido un error al actualizar el Cliente.',
-      error: error
-    });
+
+    res.status(200).json({ mensaje: `Cliente con ID ${ID_Cliente} actualizada.` });
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error al actualizar el cliente.', error });
   }
 };
