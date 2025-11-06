@@ -1,5 +1,4 @@
 
-
 DROP DATABASE IF EXISTS Moto_Repuesto;
 CREATE DATABASE IF NOT EXISTS Moto_Repuesto;
 USE Moto_Repuesto;
@@ -355,6 +354,8 @@ BEGIN
             CONCAT('Se eliminó detalle venta ID ', OLD.ID_Detalle_ven, ' producto ID ', OLD.ID_Producto, ' (+', OLD.Cantidad_ven, ')'));
 END;
 //
+
+DELIMITER ;
 
 DELIMITER //
 
@@ -1144,10 +1145,5 @@ SELECT * FROM Ventas LIMIT 10;
 SELECT * FROM Detalle_Compras LIMIT 10;
 SELECT * FROM Detalle_Ventas LIMIT 10;
 
--- Ejemplos de llamados a procedimientos (descomentar para usar)
--- CALL RegistrarCliente('Luis','Alberto','González','Pérez','123123123','300111222');
--- CALL RegistrarProducto('Producto X','Descripción',10,5.00,8.00);
--- CALL RegistrarCompra('2025-04-28', 1, 2, 50, 30.00);
--- CALL RegistrarVenta('2025-04-28', 2, 3, 5, 50.00);
 
 -- FIN DEL SCRIPT
