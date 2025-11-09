@@ -1,31 +1,228 @@
-import { Router } from "express";
-import {
-  obtenerProductos,
-  obtenerProducto,
-  registrarProducto,
-  eliminarProducto,
-  actualizarProductoPatch
-} from "../controllers/producto.controller.js";
+import { useState, useEffect } from "react";
+import { Container, Row, Col, Button } from "react-bootstrap";
+import TablaProducto from "../components/productos/TablaProducto";
+import CuadroBusquedas from "../components/busquedas/CuadroBusquedas";
+import ModalRegistroProductos from "../components/productos/ModalRegistroProductos";
+import ModalEdicionProducto from "../components/productos/ModalEdicionProducto";
+import ModalEliminacionProducto from "../components/productos/ModalEliminacionProducto";
 
-const router = Router();
+const Productos = () => {
+  const [productos, setProductos] = useState([]);
+  const [productosFiltrados, setProductosFiltrados] = useState([]);
+  const [textoBusqueda, setTextoBusqueda] = useState("");
+  const [mostrarModal, setMostrarModal] = useState(false);
+  const [mostrarModalEdicion, setMostrarModalEdicion] = useState(false);
+  const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false);
+  const [productoEditado, setProductoEditado] = useState(null);
+  const [productoAEliminar, setProductoAEliminar] = useState(null);
+  const [paginaActual, establecerPaginaActual] = useState(1);
+  const elementosPorPagina = 5;
 
-// ✅ Obtener todos los productos
-router.get("/productos", obtenerProductos);
+  // 🟩 Estado inicial con nombres coherentes a la BD
+  const [nuevoProducto, setNuevoProducto] = useState({
+    Nombre_P: "",
+    Descripcion: "",
+    Cantidad: 0,
+    PrecioCompra: "",
+    PrecioVenta: "",
+    Disponible: true,
+  });
 
-// ✅ Obtener un producto por su ID
-router.get("/producto/:ID_Producto", obtenerProducto);
+  // 🟩 Manejar cambios en los inputs
+  const manejarCambioInput = (e) => {
+    const { name, value, type, checked } = e.target;
+    setNuevoProducto((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
 
-// ✅ Registrar un nuevo producto
-router.post("/registrarproducto", registrarProducto);
+  // 🟩 Obtener todos los productos
+  const obtenerProductos = async () => {
+    try {
+      const respuesta = await fetch("http://localhost:3000/api/productos");
+      if (!respuesta.ok) throw new Error("Error al obtener productos");
+      const datos = await respuesta.json();
+      setProductos(datos);
+      setProductosFiltrados(datos);
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
 
-// ✅ Actualizar un producto (PATCH)
-router.patch("/actualizarproducto/:ID_Producto", actualizarProductoPatch);
+  // 🟩 Agregar nuevo producto
+  const agregarProducto = async () => {
+    if (!nuevoProducto.Nombre_P.trim()) return alert("El nombre es obligatorio");
 
-<<<<<<< HEAD
-// ✅ Eliminar un producto
-router.delete("/eliminarproducto/:ID_Producto", eliminarProducto);
-=======
-router.patch('/actualizarproducto/:ID_Producto', actualizarProductoPatch);
->>>>>>> 88e98bb5de87694f7df8bb57f65161a95cdaf558
+    try {
+      const respuesta = await fetch("http://localhost:3000/api/registrarproducto", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          Nombre_P: nuevoProducto.Nombre_P,
+          Descripcion: nuevoProducto.Descripcion,
+          Cantidad: nuevoProducto.Cantidad,
+          PrecioCompra: nuevoProducto.PrecioCompra,
+          PrecioVenta: nuevoProducto.PrecioVenta,
+          Disponible: nuevoProducto.Disponible,
+        }),
+      });
 
-export default router;
+      if (!respuesta.ok) throw new Error("Error al guardar producto");
+
+      // ✅ Limpia los campos y actualiza la tabla
+      setNuevoProducto({
+        Nombre_P: "",
+        Descripcion: "",
+        Cantidad: 0,
+        PrecioCompra: "",
+        PrecioVenta: "",
+        Disponible: true,
+      });
+
+      setMostrarModal(false);
+      await obtenerProductos();
+    } catch (error) {
+      console.error("Error al agregar producto:", error);
+      alert("❌ No se pudo guardar el producto.");
+    }
+  };
+
+  // 🔍 Actualiza solo el texto de búsqueda
+  const manejarCambioBusqueda = (e) => {
+    setTextoBusqueda(e.target.value.toLowerCase());
+  };
+
+  // 🧠 Aplica filtro automáticamente al cambiar búsqueda o lista
+  useEffect(() => {
+    const texto = textoBusqueda.trim().toLowerCase();
+
+    if (texto === "") {
+      setProductosFiltrados(productos);
+    } else {
+      const filtrados = productos.filter((prod) => {
+        return (
+          prod.Nombre_P?.toLowerCase().includes(texto) ||
+          prod.Descripcion?.toLowerCase().includes(texto) ||
+          prod.Cantidad?.toString().includes(texto) ||
+          prod.PrecioCompra?.toString().includes(texto) ||
+          prod.PrecioVenta?.toString().includes(texto)
+        );
+      });
+      setProductosFiltrados(filtrados);
+    }
+  }, [textoBusqueda, productos]);
+
+  // 🟩 Abrir modal de edición
+  const abrirModalEdicion = (producto) => {
+    setProductoEditado({ ...producto });
+    setMostrarModalEdicion(true);
+  };
+
+  // 🟩 Guardar cambios de edición
+  const guardarEdicion = async () => {
+    try {
+      const respuesta = await fetch(
+        `http://localhost:3000/api/actualizarproducto/${productoEditado.ID_Producto}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(productoEditado),
+        }
+      );
+      if (!respuesta.ok) throw new Error("Error al actualizar");
+      setMostrarModalEdicion(false);
+      await obtenerProductos();
+    } catch (error) {
+      console.error("Error al editar producto:", error);
+      alert("No se pudo actualizar el producto.");
+    }
+  };
+
+  // 🟩 Abrir modal de eliminación
+  const abrirModalEliminacion = (producto) => {
+    setProductoAEliminar(producto);
+    setMostrarModalEliminar(true);
+  };
+
+  // 🟩 Confirmar eliminación
+  const confirmarEliminacion = async () => {
+    try {
+      const respuesta = await fetch(
+        `http://localhost:3000/api/eliminarproducto/${productoAEliminar.ID_Producto}`,
+        { method: "DELETE" }
+      );
+      if (!respuesta.ok) throw new Error("Error al eliminar");
+      setMostrarModalEliminar(false);
+      await obtenerProductos();
+    } catch (error) {
+      console.error("Error al eliminar producto:", error);
+      alert("No se pudo eliminar el producto.");
+    }
+  };
+
+  // 🟩 Cargar productos al iniciar
+  useEffect(() => {
+    obtenerProductos();
+  }, []);
+
+  // 🟩 Paginación
+  const productosPaginados = productosFiltrados.slice(
+    (paginaActual - 1) * elementosPorPagina,
+    paginaActual * elementosPorPagina
+  );
+
+  return (
+    <Container className="mt-4">
+      <h4>Productos</h4>
+      <Row>
+        <Col lg={5} md={6} sm={8} xs={12}>
+          <CuadroBusquedas
+            textoBusqueda={textoBusqueda}
+            manejarCambioBusqueda={manejarCambioBusqueda}
+          />
+        </Col>
+        <Col className="text-end">
+          <Button className="color-boton-registro" onClick={() => setMostrarModal(true)}>
+            + Nuevo Producto
+          </Button>
+        </Col>
+      </Row>
+
+      <TablaProducto
+        productos={productosPaginados}
+        abrirModalEdicion={abrirModalEdicion}
+        abrirModalEliminacion={abrirModalEliminacion}
+        totalElementos={productos.length}
+        elementosPorPagina={elementosPorPagina}
+        paginaActual={paginaActual}
+        establecerPaginaActual={establecerPaginaActual}
+      />
+
+      <ModalRegistroProductos
+        mostrarModal={mostrarModal}
+        setMostrarModal={setMostrarModal}
+        nuevoProducto={nuevoProducto}
+        manejarCambioInput={manejarCambioInput}
+        agregarProducto={agregarProducto}
+      />
+
+      <ModalEdicionProducto
+        mostrar={mostrarModalEdicion}
+        setMostrar={setMostrarModalEdicion}
+        productoEditado={productoEditado}
+        setProductoEditado={setProductoEditado}
+        guardarEdicion={guardarEdicion}
+      />
+
+      <ModalEliminacionProducto
+        mostrar={mostrarModalEliminar}
+        setMostrar={setMostrarModalEliminar}
+        producto={productoAEliminar}
+        confirmarEliminacion={confirmarEliminacion}
+      />
+    </Container>
+  );
+};
+
+export default Productos;
