@@ -21,7 +21,11 @@ router.post("/registrarproducto", registrarProducto);
 // ✅ Actualizar un producto (PATCH)
 router.patch("/actualizarproducto/:ID_Producto", actualizarProductoPatch);
 
+<<<<<<< HEAD
 // ✅ Eliminar un producto
 router.delete("/eliminarproducto/:ID_Producto", eliminarProducto);
+=======
+router.patch('/actualizarproducto/:ID_Producto', actualizarProductoPatch);
+>>>>>>> 88e98bb5de87694f7df8bb57f65161a95cdaf558
 
 export default router;
