@@ -107,24 +107,39 @@ END;
 //
 
 CREATE TRIGGER trg_clientes_update
-AFTER UPDATE ON Clientes
-FOR EACH ROW
+AFTER UPDATE ON Clientes  -- Se ejecuta después de insertar un registro en la tabla Clientes
+FOR EACH ROW -- Se aplica a cada fila insertada (una vez por cada nuevo cliente)
 BEGIN
+
+ -- Inserta un registro en la tabla Bitacora con los datos del cambio realizado
     INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
-    VALUES ('Clientes', 'UPDATE', USER(),
-            CONCAT('Se actualizó el cliente ID ', NEW.ID_Cliente, ': ', NEW.Nombre1, ' ', COALESCE(NEW.Apellidos1,'')));
+    VALUES ('Clientes', 'UPDATE',
+    USER(), -- Usuario de la base de datos que realizó la acción
+            CONCAT('Se actualizó el cliente ID ', NEW.ID_Cliente, ': ', 
+            NEW.Nombre1, ' ', COALESCE(NEW.Apellidos1,''))); -- Crea un mensaje de detalle con el nombre y apellido del cliente
 END;
 //
 
+-- Trigger que registra en la tabla Bitacora cada vez que se elimina un cliente
 CREATE TRIGGER trg_clientes_delete
-AFTER DELETE ON Clientes
-FOR EACH ROW
+AFTER DELETE ON Clientes          -- Se ejecuta después de eliminar un registro en la tabla Clientes
+FOR EACH ROW                      -- Se aplica a cada fila eliminada (una vez por cada cliente borrado)
 BEGIN
+    -- Inserta un registro en la tabla Bitacora para dejar constancia de la eliminación
     INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
-    VALUES ('Clientes', 'DELETE', USER(),
-            CONCAT('Se eliminó el cliente ID ', OLD.ID_Cliente, ': ', OLD.Nombre1, ' ', COALESCE(OLD.Apellidos1,'')));
+    VALUES (
+        'Clientes',               -- Nombre de la tabla donde ocurrió la operación
+        'DELETE',                 -- Tipo de operación realizada (en este caso, eliminación)
+        USER(),                   -- Usuario de la base de datos que realizó la acción
+        CONCAT(                   -- Crea un mensaje de detalle con los datos del cliente eliminado
+            'Se eliminó el cliente ID ', 
+            OLD.ID_Cliente,        -- OLD hace referencia a los valores del registro antes de ser eliminado
+            ': ',
+            OLD.Nombre1, ' ',      -- Nombre del cliente eliminado
+            COALESCE(OLD.Apellidos1, '') -- Evita mostrar NULL si el apellido está vacío
+        )
+    );
 END;
-//
 
 -- PRODUCTOS
 CREATE TRIGGER trg_productos_insert
@@ -252,10 +267,10 @@ END;
 
 -- DETALLE_COMPRAS: al insertar suma stock y registra bitácora
 CREATE TRIGGER trg_detalle_compras_insert
-AFTER INSERT ON Detalle_Compras
-FOR EACH ROW
+AFTER INSERT ON Detalle_Compras   -- Se ejecuta después de insertar un registro en Detalle_Compras
+FOR EACH ROW -- Se aplica a cada fila insertada (una vez por cada detalle de compra)
 BEGIN
-    UPDATE Productos
+    UPDATE Productos   -- Actualiza la cantidad en stock del producto comprado
     SET Cantidad = Cantidad + NEW.Cantidad_com,
         Disponible = (Cantidad + NEW.Cantidad_com) > 0
     WHERE ID_Producto = NEW.ID_Producto;
@@ -399,30 +414,45 @@ DELIMITER ;
 -- VISTAS
 -- ======================================
 
-CREATE OR REPLACE VIEW Productos_Stock AS
-SELECT Nombre_P, Cantidad
-FROM Productos
-WHERE Cantidad > 10;
+CREATE OR REPLACE VIEW Productos_Stock AS -- crea una vista nueva o reemplaza una existente con el mismo nombre.
+SELECT Nombre_P, Cantidad -- selecciona el nombre y la cantidad
+FROM Productos  --   De la tabla Producto
+WHERE Cantidad > 10;  -- donde la cantidad sea mayor a 10
 
 CREATE OR REPLACE VIEW Productos_Bajo_Stock AS
 SELECT Nombre_P, Cantidad
 FROM Productos
 WHERE Cantidad <= 10;
 
-CREATE OR REPLACE VIEW Productos_Mas_Vendidos AS
-SELECT P.Nombre_P, SUM(DV.Cantidad_ven) AS Total_Vendido
-FROM Detalle_Ventas DV
-JOIN Productos P ON DV.ID_Producto = P.ID_Producto
-GROUP BY P.Nombre_P
-ORDER BY Total_Vendido DESC;
+CREATE OR REPLACE VIEW Productos_Mas_Vendidos AS -- Vista que muestra los productos más vendidos con la cantidad total vendida
+SELECT P.Nombre_P, SUM(DV.Cantidad_ven) AS Total_Vendido -- Selecciona el nombre del producto y la suma de todas las ventas
+FROM Detalle_Ventas DV  -- Se obtiene la información de la tabla Detalle_Ventas
+JOIN Productos P ON DV.ID_Producto = P.ID_Producto -- Se une con la tabla Productos para obtener el nombre del producto correspondiente
+GROUP BY P.Nombre_P -- Agrupa los resultados por producto para sumar correctamente todas las ventas
+ORDER BY Total_Vendido DESC; -- Ordena los productos de mayor a menor según la cantidad total vendida
 
+-- Vista que muestra el total gastado en cada compra, con información del proveedor
 CREATE OR REPLACE VIEW Gastos_Compras AS
-SELECT Co.ID_Compra, Co.Fecha_compra, P.Nombre_Prov,
-       SUM(DC.Cantidad_com * DC.Precio_Com) AS Total_Compra
+-- Selecciona el ID de la compra, fecha, nombre del proveedor y total gastado
+SELECT 
+    Co.ID_Compra,                              -- ID de la compra
+    Co.Fecha_compra,                            -- Fecha de realización de la compra
+    P.Nombre_Prov,                              -- Nombre del proveedor
+    SUM(DC.Cantidad_com * DC.Precio_Com) AS Total_Compra  -- Total de la compra (cantidad * precio)
+-- Información principal de la tabla Compras
 FROM Compras Co
-LEFT JOIN Proveedores P ON Co.ID_Proveedor = P.ID_Proveedor
-LEFT JOIN Detalle_Compras DC ON Co.ID_Compra = DC.ID_Compra
-GROUP BY Co.ID_Compra, Co.Fecha_compra, P.Nombre_Prov;
+-- Se une con la tabla Proveedores para obtener el nombre del proveedor
+LEFT JOIN Proveedores P 
+    ON Co.ID_Proveedor = P.ID_Proveedor
+-- Se une con Detalle_Compras para calcular el total gastado por cada compra
+LEFT JOIN Detalle_Compras DC 
+    ON Co.ID_Compra = DC.ID_Compra
+-- Agrupa los resultados por ID de compra, fecha y proveedor
+GROUP BY 
+    Co.ID_Compra, 
+    Co.Fecha_compra, 
+    P.Nombre_Prov;
+
 
 CREATE OR REPLACE VIEW Productos_No_Vendidos AS
 SELECT P.ID_Producto, P.Nombre_P, P.Cantidad
@@ -893,10 +923,10 @@ DELIMITER ;
 -- Si ocurre un error, ejecutarlos manualmente como usuario con privilegios suficientes.
 
 -- Crear roles
-CREATE ROLE IF NOT EXISTS 'Admin', 'Empleado', 'Cliente';
+CREATE ROLE IF NOT EXISTS 'Admin', 'Empleado', 'Cliente'; -- se crean los roles
 
 -- Crear usuarios y asignar roles (ejemplo)
-CREATE USER IF NOT EXISTS 'admin_moto'@'localhost' IDENTIFIED BY 'Admin123';
+CREATE USER IF NOT EXISTS 'admin_moto'@'localhost' IDENTIFIED BY 'Admin123'; -- se crea el usuario si no existe y se le asigna una contrasena
 CREATE USER IF NOT EXISTS 'empleado_moto'@'localhost' IDENTIFIED BY 'Empleado123';
 CREATE USER IF NOT EXISTS 'cliente_moto'@'localhost' IDENTIFIED BY 'Cliente123';
 
