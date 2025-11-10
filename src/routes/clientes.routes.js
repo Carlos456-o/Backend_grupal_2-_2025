@@ -1,24 +1,27 @@
-
 import { Router } from "express";
-import { obtenerClientes, obtenerCliente, registrarCliente,eliminarCliente,
-    actualizarClientePatch } from "../controllers/clientes.controller.js";
+import {
+  obtenerClientes,
+  obtenerCliente,
+  registrarCliente,
+  eliminarCliente,
+  actualizarClientePatch
+} from "../controllers/clientes.controller.js";
 
 const router = Router();
 
-// Ruta para obtener todos los clientes
+//  Obtener todos los clientes
 router.get("/clientes", obtenerClientes);
 
-// Ruta para obtener un cliente por su ID
-router.get("/clientes/:ID_Cliente", obtenerCliente);
+//  Obtener un cliente por su ID
+router.get("/clientes/:id_cliente", obtenerCliente);
 
-// Ruta para registrar una nueva Categoría
-router.post('/registrarCliente', registrarCliente);
+//  Registrar un nuevo cliente
+router.post("/registrarCliente", registrarCliente);
 
-// Ruta para eliminar un cliente por su ID
-router.delete('/eliminarcliente/:id_cliente', eliminarCliente);
+//  Eliminar un cliente por su ID
+router.delete("/eliminarCliente/:id_cliente", eliminarCliente);
 
-// Ruta para actualizar parcialmente un cliente por su ID
-router.patch('/actualizarcliente/:id_cliente', actualizarClientePatch);
+//  Actualizar parcialmente un cliente por su ID
+router.patch("/actualizarCliente/:id_cliente", actualizarClientePatch);
 
 export default router;
-// Note: The function name and the route path should be consistent with the functionality they provide.
