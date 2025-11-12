@@ -86,14 +86,18 @@ CREATE TABLE Detalle_Compras(
     FOREIGN KEY (ID_Compra) REFERENCES Compras (ID_Compra) ON DELETE CASCADE
 );
 
--- Bitacora para auditoría
+-- ===============================
+-- TABLA DE BITÁCORA
+-- Sirve para guardar los movimientos del sistema
+-- (quién hizo qué, cuándo y en qué tabla)
+-- ===============================
 CREATE TABLE Bitacora (
-    ID_Bitacora INT AUTO_INCREMENT PRIMARY KEY,
-    Tabla VARCHAR(50) NOT NULL,
-    Operacion VARCHAR(20) NOT NULL,
-    Usuario VARCHAR(100) NOT NULL,
-    Fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
-    Detalle TEXT
+    ID_Bitacora INT AUTO_INCREMENT PRIMARY KEY,  -- Identificador único
+    Tabla VARCHAR(50) NOT NULL,                  -- Nombre de la tabla afectada
+    Operacion VARCHAR(20) NOT NULL,              -- Tipo de acción (INSERT, UPDATE, DELETE)
+    Usuario VARCHAR(100) NOT NULL,               -- Usuario que hizo el cambio
+    Fecha DATETIME DEFAULT CURRENT_TIMESTAMP,    -- Momento exacto de la acción
+    Detalle TEXT                                 -- Descripción o detalle adicional
 );
 
 -- Usuarios (credenciales / roles simples)
@@ -111,25 +115,56 @@ CREATE TABLE Usuarios (
 DELIMITER //
 
 -- BITÁCORA: GENERALES (INSERT/UPDATE/DELETE) para tablas clave
+-- ==========================================
+-- TRIGGER: trg_clientes_insert
+-- Se activa automáticamente después de insertar un cliente nuevo
+-- Guarda la acción en la tabla Bitácora
+-- ==========================================
 CREATE TRIGGER trg_clientes_insert
-AFTER INSERT ON Clientes
-FOR EACH ROW
+AFTER INSERT ON Clientes       -- Se ejecuta después de insertar en Clientes
+FOR EACH ROW                   -- Afecta cada registro nuevo
 BEGIN
+    -- Inserta en la bitácora los datos del nuevo cliente
     INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
-    VALUES ('Clientes', 'INSERT', USER(),
-            CONCAT('Se agregó el cliente: ', NEW.Nombre1, ' ', COALESCE(NEW.Apellidos1,'')));
+    VALUES (
+        'Clientes',            -- Tabla afectada
+        'INSERT',              -- Tipo de operación
+        USER(),                -- Usuario que realizó la acción
+        CONCAT(                -- Descripción del registro insertado
+            'Se agregó el cliente: ', 
+            NEW.Nombre1, ' ', 
+            COALESCE(NEW.Apellidos1,'') -- Evita errores si el apellido está vacío
+        )
+    );
 END;
 //
 
+
+-- ==========================================
+-- TRIGGER: trg_clientes_update
+-- Se ejecuta automáticamente después de actualizar un cliente
+-- Guarda el cambio en la tabla Bitácora
+-- ==========================================
 CREATE TRIGGER trg_clientes_update
-AFTER UPDATE ON Clientes
-FOR EACH ROW
+AFTER UPDATE ON Clientes        -- Se activa después de una actualización en Clientes
+FOR EACH ROW                    -- Aplica a cada registro modificado
 BEGIN
+    -- Inserta en la Bitácora los datos del cliente actualizado
     INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
-    VALUES ('Clientes', 'UPDATE', USER(),
-            CONCAT('Se actualizó el cliente ID ', NEW.ID_Cliente, ': ', NEW.Nombre1, ' ', COALESCE(NEW.Apellidos1,'')));
+    VALUES (
+        'Clientes',             -- Tabla afectada
+        'UPDATE',               -- Tipo de operación
+        USER(),                 -- Usuario que realizó la acción
+        CONCAT(                 -- Mensaje con información del cliente actualizado
+            'Se actualizó el cliente ID ', 
+            NEW.ID_Cliente, ': ', 
+            NEW.Nombre1, ' ', 
+            COALESCE(NEW.Apellidos1,'')  -- Evita errores si el apellido está vacío
+        )
+    );
 END;
 //
+
 
 CREATE TRIGGER trg_clientes_delete
 AFTER DELETE ON Clientes
@@ -390,12 +425,20 @@ SELECT Nombre_P, Cantidad
 FROM Productos
 WHERE Cantidad <= 10;
 
+-- ==========================================
+-- VISTA: Productos_Mas_Vendidos
+-- Muestra los productos con mayor cantidad vendida
+-- ==========================================
 CREATE OR REPLACE VIEW Productos_Mas_Vendidos AS
-SELECT P.Nombre_P, SUM(DV.Cantidad_ven) AS Total_Vendido
+SELECT 
+    P.Nombre_P,                         -- Nombre del producto
+    SUM(DV.Cantidad_ven) AS Total_Vendido -- Total de unidades vendidas
 FROM Detalle_Ventas DV
-JOIN Productos P ON DV.ID_Producto = P.ID_Producto
-GROUP BY P.Nombre_P
-ORDER BY Total_Vendido DESC;
+JOIN Productos P 
+    ON DV.ID_Producto = P.ID_Producto   -- Une ventas con productos
+GROUP BY P.Nombre_P                     -- Agrupa por nombre del producto
+ORDER BY Total_Vendido DESC;            -- Ordena del más vendido al menos vendido
+
 
 CREATE OR REPLACE VIEW Gastos_Compras AS
 SELECT 
@@ -406,12 +449,20 @@ SELECT
 FROM Compras Co
 LEFT JOIN Proveedores P ON Co.ID_Proveedor = P.ID_Proveedor;
 
+-- ==========================================
+-- VISTA: Productos_No_Vendidos
+-- Muestra los productos que nunca se han vendido
+-- ==========================================
 CREATE OR REPLACE VIEW Productos_No_Vendidos AS
-SELECT P.ID_Producto, P.Nombre_P, P.Cantidad
+SELECT 
+    P.ID_Producto,   -- Código del producto
+    P.Nombre_P,      -- Nombre del producto
+    P.Cantidad       -- Cantidad en inventario
 FROM Productos P
-LEFT JOIN Detalle_Ventas DV ON P.ID_Producto = DV.ID_Producto
-WHERE DV.ID_Producto IS NULL
-ORDER BY P.Cantidad DESC;
+LEFT JOIN Detalle_Ventas DV 
+    ON P.ID_Producto = DV.ID_Producto  -- Une productos con sus ventas (si existen)
+WHERE DV.ID_Producto IS NULL           -- Solo muestra los que no tienen ventas
+ORDER BY P.Cantidad DESC;              -- Ordena por cantidad en inventario (mayor a menor)
 
 CREATE OR REPLACE VIEW Clientes_Frecuentes AS
 SELECT C.ID_Cliente, CONCAT_WS(' ', C.Nombre1, C.Apellidos1) AS Nombre_Completo, 
@@ -749,18 +800,26 @@ DELIMITER ;
 -- FUNCIONES (ajustadas si aplica)
 -- ======================================
 DELIMITER //
+-- ==========================================
+-- FUNCIÓN: ObtenerNombreCompletoCliente
+-- Devuelve el nombre completo de un cliente
+-- ==========================================
 CREATE FUNCTION ObtenerNombreCompletoCliente(p_ID_Cliente INT)
 RETURNS VARCHAR(255)
 DETERMINISTIC
 BEGIN
-    DECLARE nombre_completo VARCHAR(255);
+    DECLARE nombre_completo VARCHAR(255);  -- Variable para guardar el nombre completo
+
+    -- Selecciona y concatena todos los nombres y apellidos del cliente
     SELECT CONCAT_WS(' ', Nombre1, Nombre2, Apellidos1, Apellidos2)
     INTO nombre_completo
     FROM Clientes
     WHERE ID_Cliente = p_ID_Cliente;
-    RETURN nombre_completo;
+
+    RETURN nombre_completo; -- Devuelve el nombre completo
 END;
 //
+
 
 CREATE FUNCTION TotalVentasProducto(p_ID_Producto INT)
 RETURNS DECIMAL(12,2)
