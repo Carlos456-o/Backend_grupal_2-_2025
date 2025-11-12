@@ -1,97 +1,115 @@
-  import { pool } from "../../db_connection.js";
+import { pool } from "../../db_connection.js";
 
-  // Obtener todas las usuarios
-  export const obtenerProveedores = async (req, res) => {
-    try {
-      const [result] = await pool.query("SELECT * FROM Proveedores");
-      res.json(result);
-    } catch (error) {
-      return res.status(500).json({
-        mensaje: "Ha ocurrido un error al leer los datos.",
-        error: error,
-      });
-    }
-  };
-
-  // Obtener un Proveedor por su ID
-export const obtenerProveedor = async (req, res) => {
+//  Obtener todos los proveedores
+export const obtenerProveedores = async (req, res) => {
   try {
-    const ID_Proveedor = req.params.ID_Proveedor;
-    const [result] = await pool.query(
-      "SELECT * FROM Proveedores WHERE ID_Proveedor= ?",
-      [ID_Proveedor]
-    );
-    if (result.length <= 0) {
-      return res.status(404).json({
-        mensaje: `Error al leer los datos. ID ${ID_Proveedor} no encontrado.`,
-      });
-    }
-    res.json(result[0]);
+    const [result] = await pool.query("SELECT * FROM Proveedores");
+    res.json(result);
   } catch (error) {
     return res.status(500).json({
-      mensaje: "Ha ocurrido un error al leer los datos de los Proveedores.",
+      mensaje: "Ha ocurrido un error al leer los datos.",
+      error: error.message,
     });
   }
 };
 
-// Registrar una nuevo Proveedor
-export const registrarProveedor = async (req, res) => {
+//  Obtener un proveedor por su ID
+export const obtenerProveedor = async (req, res) => {
   try {
-    const { Nombre_Prov,  Contacto, Email } = req.body;
+    const { ID_Proveedor } = req.params;
     const [result] = await pool.query(
-      'INSERT INTO Proveedores ( Nombre_Prov, Contacto, Email ) VALUES (?, ?, ?, ?, ?, ?)',
-      [ Nombre_Prov, Contacto, Email ]
+      "SELECT * FROM Proveedores WHERE ID_Proveedor = ?",
+      [ID_Proveedor]
     );
-    res.status(201).json({ ID_Proveedor: result.insertId });
+
+    if (result.length === 0) {
+      return res.status(404).json({
+        mensaje: `Proveedor con ID ${ID_Proveedor} no encontrado.`,
+      });
+    }
+
+    res.json(result[0]);
   } catch (error) {
     return res.status(500).json({
-      mensaje: 'Ha ocurrido un error al registrar el Proveedor.',
-      error: error
+      mensaje: "Ha ocurrido un error al leer los datos del proveedor.",
+      error: error.message,
     });
-  } 
+  }
 };
 
-// Eliminar un proveedor por su ID
+//  Registrar un nuevo proveedor
+export const registrarProveedor = async (req, res) => {
+  try {
+    const { Nombre_Prov, Contacto, Email } = req.body;
+
+    const [result] = await pool.query(
+      "INSERT INTO Proveedores (Nombre_Prov, Contacto, Email) VALUES (?, ?, ?)",
+      [Nombre_Prov, Contacto, Email]
+    );
+
+    res.status(201).json({
+      mensaje: "Proveedor registrado exitosamente.",
+      ID_Proveedor: result.insertId,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      mensaje: "Ha ocurrido un error al registrar el proveedor.",
+      error: error.message,
+    });
+  }
+};
+
+//  Eliminar un proveedor por su ID
 export const eliminarProveedor = async (req, res) => {
   try {
-    const ID_Proveedor = req.params.ID_Proveedor;
+    const { ID_Proveedor } = req.params;
+
     const [result] = await pool.query(
-      'DELETE FROM Proveedores WHERE ID_Proveedor = ?',
+      "DELETE FROM Proveedores WHERE ID_Proveedor = ?",
       [ID_Proveedor]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
-        mensaje: `Error al eliminar el proveedor. El ID ${ID_Proveedor} no fue encontrado.`
+        mensaje: `Proveedor con ID ${ID_Proveedor} no encontrado.`,
       });
     }
 
-    // Respuesta sin contenido para indicar éxito
-    res.status(204).send();
+    res.status(200).json({
+      mensaje: `Proveedor con ID ${ID_Proveedor} eliminado correctamente.`,
+    });
   } catch (error) {
     return res.status(500).json({
-      mensaje: 'Ha ocurrido un error al eliminar el proveedor.',
-      error: error
+      mensaje: "Ha ocurrido un error al eliminar el proveedor.",
+      error: error.message,
     });
   }
 };
 
+//  Actualizar un proveedor (PATCH)
 export const actualizarProveedoresPatch = async (req, res) => {
   try {
     const { ID_Proveedor } = req.params;
     const datos = req.body;
 
     const [result] = await pool.query(
-      'UPDATE Proveedores SET ? WHERE ID_Proveedor = ?',
+      "UPDATE Proveedores SET ? WHERE ID_Proveedor = ?",
       [datos, ID_Proveedor]
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ mensaje: `Producto con ID ${ID_Proveedor} no encontrada.` });
+      return res
+        .status(404)
+        .json({ mensaje: `Proveedor con ID ${ID_Proveedor} no encontrado.` });
     }
 
-    res.status(200).json({ mensaje: `Producto con ID ${ID_Proveedor} actualizada.` });
+    res
+      .status(200)
+      .json({ mensaje: `Proveedor con ID ${ID_Proveedor} actualizado correctamente.` });
   } catch (error) {
-    res.status(500).json({ mensaje: 'Error al actualizar el producto.', error });
+    res.status(500).json({
+      mensaje: "Error al actualizar el proveedor.",
+      error: error.message,
+    });
   }
 };

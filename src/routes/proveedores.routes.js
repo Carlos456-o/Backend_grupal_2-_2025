@@ -9,20 +9,20 @@ import {
 
 const router = Router();
 
-// Ruta para obtener todos los detalles de ventas
+//  Obtener todos los proveedores
 router.get("/proveedores", obtenerProveedores);
 
-// Ruta para obtener un cliente por su ID
+//  Obtener un proveedor por su ID
 router.get("/proveedor/:ID_Proveedor", obtenerProveedor);
 
-// Ruta para registrar una nueva Categoría
+//  Registrar un nuevo proveedor
 router.post("/registrarProveedores", registrarProveedor);
 
-//ruta para eliminar una venta por su ID
-router.delete("/eliminarproveedores/:ID_Proveedor", eliminarProveedor);
+//  Eliminar un proveedor por su ID
+router.delete("/eliminarProveedores/:ID_Proveedor", eliminarProveedor);
 
-router.delete(
-  "/actualizarproveedores/:id_proveedor", actualizarProveedoresPatch
-);
+//  Actualizar un proveedor (parcialmente)
+router.patch("/actualizarProveedores/:ID_Proveedor", actualizarProveedoresPatch);
 
 export default router;
+
