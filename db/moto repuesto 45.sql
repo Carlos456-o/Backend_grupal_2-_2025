@@ -9,7 +9,7 @@ USE Moto_Repuesto;
 
 CREATE TABLE Clientes(
     ID_Cliente INT AUTO_INCREMENT PRIMARY KEY,
-    Nombre1 VARCHAR(35) NOT NULL,   
+    Nombre1 VARCHAR(35) NOT NULL,
     Nombre2 VARCHAR(35),
     Apellidos1 VARCHAR(35) NOT NULL,
     Apellidos2 VARCHAR(35),
@@ -29,24 +29,41 @@ CREATE TABLE Productos (
     Nombre_P VARCHAR(100) NOT NULL,
     Descripcion VARCHAR(200),
     Cantidad INT NOT NULL DEFAULT 0,               -- cantidad real en inventario
-    Disponible BOOLEAN NOT NULL DEFAULT TRUE, -- true=disponible, false=no disponible
+    Disponible BOOLEAN NOT NULL DEFAULT TRUE,      -- true=disponible, false=no disponible
     PrecioCompra DECIMAL(10,2) NOT NULL,
     PrecioVenta DECIMAL(10,2) NOT NULL
 );
 
+-- Nueva tabla Empleados
+CREATE TABLE Empleados (
+    ID_Empleado INT AUTO_INCREMENT PRIMARY KEY,
+    Nombre VARCHAR(60) NOT NULL,
+    Apellido VARCHAR(60),
+    Telefono VARCHAR(20),
+    Email VARCHAR(100),
+    Cargo VARCHAR(50)
+);
+
+-- Compras: eliminada la columna Cantidad; agregada Total_Compra y relación con Empleados
 CREATE TABLE Compras (
     ID_Compra INT AUTO_INCREMENT PRIMARY KEY,
     Fecha_compra DATE NOT NULL,
-    Cantidad INT DEFAULT NULL,
     ID_Proveedor INT,
-    FOREIGN KEY (ID_Proveedor) REFERENCES Proveedores (ID_Proveedor) ON DELETE SET NULL
+    ID_Empleado INT,
+    Total_Compra DECIMAL(12,2) NOT NULL DEFAULT 0,
+    FOREIGN KEY (ID_Proveedor) REFERENCES Proveedores (ID_Proveedor) ON DELETE SET NULL,
+    FOREIGN KEY (ID_Empleado) REFERENCES Empleados (ID_Empleado) ON DELETE SET NULL
 );
 
+-- Ventas: agregada columna Total_Venta y relación con Empleados y Cliente
 CREATE TABLE Ventas (
     ID_Venta INT AUTO_INCREMENT PRIMARY KEY,
     Fecha_Venta DATE NOT NULL,
     ID_Cliente INT,
-    FOREIGN KEY (ID_Cliente) REFERENCES Clientes (ID_Cliente) ON DELETE SET NULL
+    ID_Empleado INT,
+    Total_Venta DECIMAL(12,2) NOT NULL DEFAULT 0,
+    FOREIGN KEY (ID_Cliente) REFERENCES Clientes (ID_Cliente) ON DELETE SET NULL,
+    FOREIGN KEY (ID_Empleado) REFERENCES Empleados (ID_Empleado) ON DELETE SET NULL
 );
 
 CREATE TABLE Detalle_Ventas(
@@ -69,9 +86,7 @@ CREATE TABLE Detalle_Compras(
     FOREIGN KEY (ID_Compra) REFERENCES Compras (ID_Compra) ON DELETE CASCADE
 );
 
--- ======================================
--- TABLA DE BITÁCORA
--- ======================================
+-- Bitacora para auditoría
 CREATE TABLE Bitacora (
     ID_Bitacora INT AUTO_INCREMENT PRIMARY KEY,
     Tabla VARCHAR(50) NOT NULL,
@@ -81,7 +96,7 @@ CREATE TABLE Bitacora (
     Detalle TEXT
 );
 
--- Tabla Usuarios: almacena credenciales de acceso
+-- Usuarios (credenciales / roles simples)
 CREATE TABLE Usuarios (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     usuario VARCHAR(50),
@@ -90,12 +105,12 @@ CREATE TABLE Usuarios (
 );
 
 -- ======================================
--- TRIGGERS DE BITÁCORA (INSERT/UPDATE/DELETE) CORREGIDOS
+-- TRIGGERS (mantienen stock y totales)
 -- ======================================
 
 DELIMITER //
 
--- CLIENTES
+-- BITÁCORA: GENERALES (INSERT/UPDATE/DELETE) para tablas clave
 CREATE TRIGGER trg_clientes_insert
 AFTER INSERT ON Clientes
 FOR EACH ROW
@@ -107,41 +122,25 @@ END;
 //
 
 CREATE TRIGGER trg_clientes_update
-AFTER UPDATE ON Clientes  -- Se ejecuta después de insertar un registro en la tabla Clientes
-FOR EACH ROW -- Se aplica a cada fila insertada (una vez por cada nuevo cliente)
+AFTER UPDATE ON Clientes
+FOR EACH ROW
 BEGIN
-
- -- Inserta un registro en la tabla Bitacora con los datos del cambio realizado
     INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
-    VALUES ('Clientes', 'UPDATE',
-    USER(), -- Usuario de la base de datos que realizó la acción
-            CONCAT('Se actualizó el cliente ID ', NEW.ID_Cliente, ': ', 
-            NEW.Nombre1, ' ', COALESCE(NEW.Apellidos1,''))); -- Crea un mensaje de detalle con el nombre y apellido del cliente
+    VALUES ('Clientes', 'UPDATE', USER(),
+            CONCAT('Se actualizó el cliente ID ', NEW.ID_Cliente, ': ', NEW.Nombre1, ' ', COALESCE(NEW.Apellidos1,'')));
 END;
 //
 
--- Trigger que registra en la tabla Bitacora cada vez que se elimina un cliente
 CREATE TRIGGER trg_clientes_delete
-AFTER DELETE ON Clientes          -- Se ejecuta después de eliminar un registro en la tabla Clientes
-FOR EACH ROW                      -- Se aplica a cada fila eliminada (una vez por cada cliente borrado)
+AFTER DELETE ON Clientes
+FOR EACH ROW
 BEGIN
-    -- Inserta un registro en la tabla Bitacora para dejar constancia de la eliminación
     INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
-    VALUES (
-        'Clientes',               -- Nombre de la tabla donde ocurrió la operación
-        'DELETE',                 -- Tipo de operación realizada (en este caso, eliminación)
-        USER(),                   -- Usuario de la base de datos que realizó la acción
-        CONCAT(                   -- Crea un mensaje de detalle con los datos del cliente eliminado
-            'Se eliminó el cliente ID ', 
-            OLD.ID_Cliente,        -- OLD hace referencia a los valores del registro antes de ser eliminado
-            ': ',
-            OLD.Nombre1, ' ',      -- Nombre del cliente eliminado
-            COALESCE(OLD.Apellidos1, '') -- Evita mostrar NULL si el apellido está vacío
-        )
-    );
+    VALUES ('Clientes', 'DELETE', USER(),
+            CONCAT('Se eliminó el cliente ID ', OLD.ID_Cliente, ': ', OLD.Nombre1, ' ', COALESCE(OLD.Apellidos1,'')));
 END;
+//
 
--- PRODUCTOS
 CREATE TRIGGER trg_productos_insert
 AFTER INSERT ON Productos
 FOR EACH ROW
@@ -172,7 +171,6 @@ BEGIN
 END;
 //
 
--- PROVEEDORES
 CREATE TRIGGER trg_proveedores_insert
 AFTER INSERT ON Proveedores
 FOR EACH ROW
@@ -203,77 +201,26 @@ BEGIN
 END;
 //
 
--- COMPRAS
-CREATE TRIGGER trg_compras_insert
-AFTER INSERT ON Compras
-FOR EACH ROW
-BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
-    VALUES ('Compras', 'INSERT', USER(),
-            CONCAT('Se registró la compra ID: ', NEW.ID_Compra, ' proveedor ID: ', NEW.ID_Proveedor));
-END;
-//
-
-CREATE TRIGGER trg_compras_update
-AFTER UPDATE ON Compras
-FOR EACH ROW
-BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
-    VALUES ('Compras', 'UPDATE', USER(),
-            CONCAT('Se actualizó la compra ID: ', NEW.ID_Compra));
-END;
-//
-
-CREATE TRIGGER trg_compras_delete
-AFTER DELETE ON Compras
-FOR EACH ROW
-BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
-    VALUES ('Compras', 'DELETE', USER(),
-            CONCAT('Se eliminó la compra ID: ', OLD.ID_Compra));
-END;
-//
-
--- VENTAS
-CREATE TRIGGER trg_ventas_insert
-AFTER INSERT ON Ventas
-FOR EACH ROW
-BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion,Usuario, Detalle)
-    VALUES ('Ventas', 'INSERT', USER(),
-            CONCAT('Se registró la venta ID: ', NEW.ID_Venta, ' cliente ID: ', NEW.ID_Cliente));
-END;
-//
-
-CREATE TRIGGER trg_ventas_update
-AFTER UPDATE ON Ventas
-FOR EACH ROW
-BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
-    VALUES ('Ventas', 'UPDATE', USER(),
-            CONCAT('Se actualizó la venta ID: ', NEW.ID_Venta));
-END;
-//
-
-CREATE TRIGGER trg_ventas_delete
-AFTER DELETE ON Ventas
-FOR EACH ROW
-BEGIN
-    INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
-    VALUES ('Ventas', 'DELETE', USER(),
-            CONCAT('Se eliminó la venta ID: ', OLD.ID_Venta));
-END;
-//
-
--- DETALLE_COMPRAS: al insertar suma stock y registra bitácora
+-- COMPRAS: al insertar detalle se suma stock y se recalcula Total_Compra
 CREATE TRIGGER trg_detalle_compras_insert
-AFTER INSERT ON Detalle_Compras   -- Se ejecuta después de insertar un registro en Detalle_Compras
-FOR EACH ROW -- Se aplica a cada fila insertada (una vez por cada detalle de compra)
+AFTER INSERT ON Detalle_Compras
+FOR EACH ROW
 BEGIN
-    UPDATE Productos   -- Actualiza la cantidad en stock del producto comprado
+    -- Actualizar stock del producto
+    UPDATE Productos
     SET Cantidad = Cantidad + NEW.Cantidad_com,
         Disponible = (Cantidad + NEW.Cantidad_com) > 0
     WHERE ID_Producto = NEW.ID_Producto;
+
+    -- Recalcular total de la compra (sumando todos los detalles)
+    UPDATE Compras
+    SET Total_Compra = (
+        SELECT IFNULL(SUM(DC2.Cantidad_com * DC2.Precio_Com), 0)
+        FROM Detalle_Compras DC2
+        WHERE DC2.ID_Compra = NEW.ID_Compra
+    )
+    WHERE ID_Compra = NEW.ID_Compra;
+
     INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
     VALUES ('Detalle_Compras', 'INSERT', USER(),
             CONCAT('Se agregó producto ID ', NEW.ID_Producto, ' a la compra ID ', NEW.ID_Compra, ' (+', NEW.Cantidad_com, ')'));
@@ -284,13 +231,24 @@ CREATE TRIGGER trg_detalle_compras_update
 AFTER UPDATE ON Detalle_Compras
 FOR EACH ROW
 BEGIN
-    -- Ajusta el stock según diferencia (nuevo - viejo)
     DECLARE diff INT;
     SET diff = NEW.Cantidad_com - OLD.Cantidad_com;
+
+    -- Ajustar stock según diferencia
     UPDATE Productos
     SET Cantidad = Cantidad + diff,
         Disponible = (Cantidad + diff) > 0
     WHERE ID_Producto = NEW.ID_Producto;
+
+    -- Recalcular total de la compra
+    UPDATE Compras
+    SET Total_Compra = (
+        SELECT IFNULL(SUM(DC2.Cantidad_com * DC2.Precio_Com), 0)
+        FROM Detalle_Compras DC2
+        WHERE DC2.ID_Compra = NEW.ID_Compra
+    )
+    WHERE ID_Compra = NEW.ID_Compra;
+
     INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
     VALUES ('Detalle_Compras', 'UPDATE', USER(),
             CONCAT('Se actualizó detalle compra ID ', NEW.ID_Detalles_Com, ', diff: ', diff));
@@ -306,18 +264,27 @@ BEGIN
     SET Cantidad = Cantidad - OLD.Cantidad_com,
         Disponible = (Cantidad - OLD.Cantidad_com) > 0
     WHERE ID_Producto = OLD.ID_Producto;
+
+    -- Recalcular total de la compra
+    UPDATE Compras
+    SET Total_Compra = (
+        SELECT IFNULL(SUM(DC2.Cantidad_com * DC2.Precio_Com), 0)
+        FROM Detalle_Compras DC2
+        WHERE DC2.ID_Compra = OLD.ID_Compra
+    )
+    WHERE ID_Compra = OLD.ID_Compra;
+
     INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
     VALUES ('Detalle_Compras', 'DELETE', USER(),
             CONCAT('Se eliminó detalle compra ID ', OLD.ID_Detalles_Com, ', producto ID ', OLD.ID_Producto));
 END;
 //
 
--- DETALLE_VENTAS: al insertar resta stock y registra bitácora
-CREATE TRIGGER trg_detalle_ventas_insert
+-- VENTAS: validar stock antes de insertar detalle y ajustar stock y totales
+CREATE TRIGGER trg_detalle_ventas_before_insert
 BEFORE INSERT ON Detalle_Ventas
 FOR EACH ROW
 BEGIN
-    -- Validar stock suficiente
     DECLARE stock_actual INT;
     SELECT Cantidad INTO stock_actual FROM Productos WHERE ID_Producto = NEW.ID_Producto FOR UPDATE;
     IF stock_actual IS NULL THEN
@@ -325,11 +292,11 @@ BEGIN
     ELSEIF stock_actual < NEW.Cantidad_ven THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Stock insuficiente para la venta';
     ELSE
+        -- Actualizar stock en la tabla Productos
         UPDATE Productos
         SET Cantidad = Cantidad - NEW.Cantidad_ven,
             Disponible = (Cantidad - NEW.Cantidad_ven) > 0
         WHERE ID_Producto = NEW.ID_Producto;
-        -- no insertamos en bitacora aquí porque AFTER INSERT lo hará
     END IF;
 END;
 //
@@ -338,6 +305,15 @@ CREATE TRIGGER trg_detalle_ventas_after_insert
 AFTER INSERT ON Detalle_Ventas
 FOR EACH ROW
 BEGIN
+    -- Recalcular total de la venta
+    UPDATE Ventas
+    SET Total_Venta = (
+        SELECT IFNULL(SUM(DV2.Cantidad_ven * DV2.Precio_Ven), 0)
+        FROM Detalle_Ventas DV2
+        WHERE DV2.ID_Venta = NEW.ID_Venta
+    )
+    WHERE ID_Venta = NEW.ID_Venta;
+
     INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
     VALUES ('Detalle_Ventas', 'INSERT', USER(),
             CONCAT('Se vendió producto ID ', NEW.ID_Producto, ' en venta ID ', NEW.ID_Venta, ' (-', NEW.Cantidad_ven, ')'));
@@ -348,7 +324,25 @@ CREATE TRIGGER trg_detalle_ventas_update
 AFTER UPDATE ON Detalle_Ventas
 FOR EACH ROW
 BEGIN
-    -- Ajuste simple: registrar cambio y no tocar cantidad automáticamente para evitar inconsistencias.
+    -- Ajuste del stock si la cantidad cambió (no se cubre re-asignación de producto distinto aquí)
+    DECLARE diff INT;
+    SET diff = NEW.Cantidad_ven - OLD.Cantidad_ven;
+
+    -- Si diff > 0 se vendió más -> restar, si diff < 0 devolver
+    UPDATE Productos
+    SET Cantidad = Cantidad - diff,
+        Disponible = (Cantidad - diff) > 0
+    WHERE ID_Producto = NEW.ID_Producto;
+
+    -- Recalcular total de la venta
+    UPDATE Ventas
+    SET Total_Venta = (
+        SELECT IFNULL(SUM(DV2.Cantidad_ven * DV2.Precio_Ven), 0)
+        FROM Detalle_Ventas DV2
+        WHERE DV2.ID_Venta = NEW.ID_Venta
+    )
+    WHERE ID_Venta = NEW.ID_Venta;
+
     INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
     VALUES ('Detalle_Ventas', 'UPDATE', USER(),
             CONCAT('Se actualizó detalle venta ID ', NEW.ID_Detalle_ven, ' producto ID ', NEW.ID_Producto));
@@ -364,6 +358,16 @@ BEGIN
     SET Cantidad = Cantidad + OLD.Cantidad_ven,
         Disponible = (Cantidad + OLD.Cantidad_ven) > 0
     WHERE ID_Producto = OLD.ID_Producto;
+
+    -- Recalcular total de la venta
+    UPDATE Ventas
+    SET Total_Venta = (
+        SELECT IFNULL(SUM(DV2.Cantidad_ven * DV2.Precio_Ven), 0)
+        FROM Detalle_Ventas DV2
+        WHERE DV2.ID_Venta = OLD.ID_Venta
+    )
+    WHERE ID_Venta = OLD.ID_Venta;
+
     INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
     VALUES ('Detalle_Ventas', 'DELETE', USER(),
             CONCAT('Se eliminó detalle venta ID ', OLD.ID_Detalle_ven, ' producto ID ', OLD.ID_Producto, ' (+', OLD.Cantidad_ven, ')'));
@@ -372,87 +376,35 @@ END;
 
 DELIMITER ;
 
-DELIMITER //
+-- ======================================
+-- VISTAS (actualizadas para usar Totales)
+-- ======================================
 
-CREATE TRIGGER trg_actualizar_inventario
-AFTER INSERT ON Detalle_Ventas
-FOR EACH ROW
-BEGIN
-
-UPDATE Productos
-SET Cantidad = Cantidad NEW.Cantidad_ven
-WHERE ID_Producto = NEW.ID_Producto;
-
-UPDATE Productos
-SET Disponible = FALSE
-WHERE ID_Producto = NEW.ID_Producto AND Cantidad <= 0;
-END;
-DELIMITER //
-
-DELIMITER //
-
-CREATE TRIGGER trg_validar_stock
-BEFORE INSERT ON Detalle_Ventas
-FOR EACH ROW
-BEGIN
-DECLARE stock_actual INT;
-
-
-SELECT Cantidad INTO stock_actual
+CREATE OR REPLACE VIEW Productos_Stock AS
+SELECT Nombre_P, Cantidad
 FROM Productos
-WHERE ID_Producto = NEW.ID_Producto;
-
-IF stock_actual < NEW.Cantidad_ven THEN
-SIGNAL SQLSTATE '45000'
-SET MESSAGE_TEXT = 'Error: Stock insuficiente para realizar la venta.';
-END IF;
-END;
-
-DELIMITER ;
-
--- ======================================
--- VISTAS
--- ======================================
-
-CREATE OR REPLACE VIEW Productos_Stock AS -- crea una vista nueva o reemplaza una existente con el mismo nombre.
-SELECT Nombre_P, Cantidad -- selecciona el nombre y la cantidad
-FROM Productos  --   De la tabla Producto
-WHERE Cantidad > 10;  -- donde la cantidad sea mayor a 10
+WHERE Cantidad > 10;
 
 CREATE OR REPLACE VIEW Productos_Bajo_Stock AS
 SELECT Nombre_P, Cantidad
 FROM Productos
 WHERE Cantidad <= 10;
 
-CREATE OR REPLACE VIEW Productos_Mas_Vendidos AS -- Vista que muestra los productos más vendidos con la cantidad total vendida
-SELECT P.Nombre_P, SUM(DV.Cantidad_ven) AS Total_Vendido -- Selecciona el nombre del producto y la suma de todas las ventas
-FROM Detalle_Ventas DV  -- Se obtiene la información de la tabla Detalle_Ventas
-JOIN Productos P ON DV.ID_Producto = P.ID_Producto -- Se une con la tabla Productos para obtener el nombre del producto correspondiente
-GROUP BY P.Nombre_P -- Agrupa los resultados por producto para sumar correctamente todas las ventas
-ORDER BY Total_Vendido DESC; -- Ordena los productos de mayor a menor según la cantidad total vendida
+CREATE OR REPLACE VIEW Productos_Mas_Vendidos AS
+SELECT P.Nombre_P, SUM(DV.Cantidad_ven) AS Total_Vendido
+FROM Detalle_Ventas DV
+JOIN Productos P ON DV.ID_Producto = P.ID_Producto
+GROUP BY P.Nombre_P
+ORDER BY Total_Vendido DESC;
 
--- Vista que muestra el total gastado en cada compra, con información del proveedor
 CREATE OR REPLACE VIEW Gastos_Compras AS
--- Selecciona el ID de la compra, fecha, nombre del proveedor y total gastado
 SELECT 
-    Co.ID_Compra,                              -- ID de la compra
-    Co.Fecha_compra,                            -- Fecha de realización de la compra
-    P.Nombre_Prov,                              -- Nombre del proveedor
-    SUM(DC.Cantidad_com * DC.Precio_Com) AS Total_Compra  -- Total de la compra (cantidad * precio)
--- Información principal de la tabla Compras
+    Co.ID_Compra,
+    Co.Fecha_compra,
+    P.Nombre_Prov,
+    Co.Total_Compra
 FROM Compras Co
--- Se une con la tabla Proveedores para obtener el nombre del proveedor
-LEFT JOIN Proveedores P 
-    ON Co.ID_Proveedor = P.ID_Proveedor
--- Se une con Detalle_Compras para calcular el total gastado por cada compra
-LEFT JOIN Detalle_Compras DC 
-    ON Co.ID_Compra = DC.ID_Compra
--- Agrupa los resultados por ID de compra, fecha y proveedor
-GROUP BY 
-    Co.ID_Compra, 
-    Co.Fecha_compra, 
-    P.Nombre_Prov;
-
+LEFT JOIN Proveedores P ON Co.ID_Proveedor = P.ID_Proveedor;
 
 CREATE OR REPLACE VIEW Productos_No_Vendidos AS
 SELECT P.ID_Producto, P.Nombre_P, P.Cantidad
@@ -472,12 +424,12 @@ ORDER BY Total_Compras DESC;
 CREATE OR REPLACE VIEW Ventas_Por_Fecha AS
 SELECT V.Fecha_Venta, P.Nombre_P AS Producto,
        SUM(DV.Cantidad_ven) AS Total_Cantidad_Vendida,
-       SUM(DV.Cantidad_ven * DV.Precio_Ven) AS Total_Venta
+       V.Total_Venta AS Total_Venta_Dia
 FROM Ventas V
 JOIN Detalle_Ventas DV ON V.ID_Venta = DV.ID_Venta
 JOIN Productos P ON DV.ID_Producto = P.ID_Producto
-GROUP BY V.Fecha_Venta, P.Nombre_P
-ORDER BY V.Fecha_Venta ASC, Total_Venta DESC;
+GROUP BY V.Fecha_Venta, P.Nombre_P, V.Total_Venta
+ORDER BY V.Fecha_Venta ASC, Total_Venta_Dia DESC;
 
 CREATE OR REPLACE VIEW Productos_Rentables AS
 SELECT ID_Producto, Nombre_P, PrecioCompra, PrecioVenta,
@@ -517,7 +469,7 @@ GROUP BY DATE_FORMAT(V.Fecha_Venta, '%Y-%m'), P.Nombre_P
 ORDER BY Mes, Total_Vendido DESC;
 
 -- ======================================
--- PROCEDIMIENTOS ALMACENADOS (corregidos)
+-- PROCEDIMIENTOS ALMACENADOS (ajustados)
 -- ======================================
 
 DELIMITER //
@@ -533,8 +485,8 @@ CREATE PROCEDURE RegistrarCliente(
 BEGIN
     INSERT INTO Clientes (Nombre1, Nombre2, Apellidos1, Apellidos2, Cedula, Telefono)
     VALUES (p_Nombre1, p_Nombre2, p_Apellidos1, p_Apellidos2, p_Cedula, p_Telefono);
-END //
-
+END;
+//
 
 CREATE PROCEDURE RegistrarProducto(
     IN p_Nombre_P VARCHAR(100),
@@ -546,8 +498,8 @@ CREATE PROCEDURE RegistrarProducto(
 BEGIN
     INSERT INTO Productos (Nombre_P, Descripcion, Cantidad, PrecioCompra, PrecioVenta)
     VALUES (p_Nombre_P, p_Descripcion, p_Cantidad, p_PrecioCompra, p_PrecioVenta);
-END //
-
+END;
+//
 
 CREATE PROCEDURE RegistrarProveedor(
     IN p_Nombre_Prov VARCHAR(100),
@@ -557,29 +509,48 @@ CREATE PROCEDURE RegistrarProveedor(
 BEGIN
     INSERT INTO Proveedores (Nombre_Prov, Contacto, Email)
     VALUES (p_Nombre_Prov, p_Contacto, p_Email);
-END //
+END;
+//
 
-
+-- RegistrarCompra: inserta compra y detalle, triggers actualizarán stock y Total_Compra
 CREATE PROCEDURE RegistrarCompra(
     IN p_Fecha DATE,
     IN p_ID_Proveedor INT,
+    IN p_ID_Empleado INT,
     IN p_ID_Producto INT,
     IN p_Cantidad INT,
     IN p_Precio DECIMAL(10,2)
 )
 BEGIN
     DECLARE nueva_compra_id INT;
-    INSERT INTO Compras (Fecha_compra, ID_Proveedor)
-    VALUES (p_Fecha, p_ID_Proveedor);
+    INSERT INTO Compras (Fecha_compra, ID_Proveedor, ID_Empleado, Total_Compra)
+    VALUES (p_Fecha, p_ID_Proveedor, p_ID_Empleado, 0);
     SET nueva_compra_id = LAST_INSERT_ID();
     INSERT INTO Detalle_Compras (ID_Compra, ID_Producto, Cantidad_com, Precio_Com)
     VALUES (nueva_compra_id, p_ID_Producto, p_Cantidad, p_Precio);
-    UPDATE Productos
-    SET Cantidad = Cantidad + p_Cantidad,
-        Disponible = (Cantidad + p_Cantidad) > 0
-    WHERE ID_Producto = p_ID_Producto;
-END //
+    -- Trigger trg_detalle_compras_insert se encargará de actualizar Productos y Total_Compra.
+END;
+//
 
+-- RegistrarVentaSimple: crea venta (Total actualizado por triggers al insertar detalle)
+CREATE PROCEDURE RegistrarVentaSimple(
+    IN p_ID_Cliente INT,
+    IN p_Fecha DATE,
+    IN p_ID_Empleado INT,
+    IN p_ID_Producto INT,
+    IN p_Cantidad INT,
+    IN p_Precio DECIMAL(10,2)
+)
+BEGIN
+    DECLARE nueva_venta_id INT;
+    INSERT INTO Ventas (ID_Cliente, Fecha_Venta, ID_Empleado, Total_Venta)
+    VALUES (p_ID_Cliente, p_Fecha, p_ID_Empleado, 0);
+    SET nueva_venta_id = LAST_INSERT_ID();
+    INSERT INTO Detalle_Ventas (ID_Venta, ID_Producto, Cantidad_ven, Precio_Ven)
+    VALUES (nueva_venta_id, p_ID_Producto, p_Cantidad, p_Precio);
+    -- Triggers se encargan de stock y Total_Venta.
+END;
+//
 
 CREATE PROCEDURE EliminarCliente(
     IN p_ID_Cliente INT
@@ -587,8 +558,8 @@ CREATE PROCEDURE EliminarCliente(
 BEGIN
     DELETE FROM Clientes
     WHERE ID_Cliente = p_ID_Cliente;
-END //
-
+END;
+//
 
 CREATE PROCEDURE ActualizarCliente(
     IN p_ID_Cliente INT,
@@ -608,34 +579,39 @@ BEGIN
         Cedula = p_Cedula,
         Telefono = p_Telefono
     WHERE ID_Cliente = p_ID_Cliente;
-END //
-
+END;
+//
 
 CREATE PROCEDURE ActualizarVenta(
     IN p_ID_Venta INT,
     IN p_NuevaFecha DATE,
-    IN p_ID_Cliente INT
+    IN p_ID_Cliente INT,
+    IN p_ID_Empleado INT
 )
 BEGIN
     UPDATE Ventas
     SET Fecha_Venta = p_NuevaFecha,
-        ID_Cliente = p_ID_Cliente
+        ID_Cliente = p_ID_Cliente,
+        ID_Empleado = p_ID_Empleado
     WHERE ID_Venta = p_ID_Venta;
-END //
-
+    -- Si cambia detalles, Totales se recalculan por triggers.
+END;
+//
 
 CREATE PROCEDURE ActualizarCompra(
     IN p_ID_Compra INT,
     IN p_NuevaFecha DATE,
-    IN p_ID_Proveedor INT
+    IN p_ID_Proveedor INT,
+    IN p_ID_Empleado INT
 )
 BEGIN
     UPDATE Compras
     SET Fecha_compra = p_NuevaFecha,
-        ID_Proveedor = p_ID_Proveedor
+        ID_Proveedor = p_ID_Proveedor,
+        ID_Empleado = p_ID_Empleado
     WHERE ID_Compra = p_ID_Compra;
-END //
-
+END;
+//
 
 CREATE PROCEDURE ActualizarProducto(
     IN p_ID_Producto INT,
@@ -653,8 +629,8 @@ BEGIN
         PrecioCompra = p_PrecioCompra,
         PrecioVenta = p_PrecioVenta
     WHERE ID_Producto = p_ID_Producto;
-END //
-
+END;
+//
 
 CREATE PROCEDURE ActualizarProveedor(
     IN p_ID_Proveedor INT,
@@ -668,8 +644,8 @@ BEGIN
         Contacto = p_Contacto,
         Email = p_Email
     WHERE ID_Proveedor = p_ID_Proveedor;
-END //
-
+END;
+//
 
 CREATE PROCEDURE EliminarVenta(
     IN p_ID_Venta INT
@@ -679,8 +655,8 @@ BEGIN
     WHERE ID_Venta = p_ID_Venta;
     DELETE FROM Ventas
     WHERE ID_Venta = p_ID_Venta;
-END //
-
+END;
+//
 
 CREATE PROCEDURE EliminarCompra(
     IN p_ID_Compra INT
@@ -690,8 +666,8 @@ BEGIN
     WHERE ID_Compra = p_ID_Compra;
     DELETE FROM Compras
     WHERE ID_Compra = p_ID_Compra;
-END //
-
+END;
+//
 
 CREATE PROCEDURE EliminarProducto(
     IN p_ID_Producto INT
@@ -702,8 +678,8 @@ BEGIN
         DELETE FROM Productos
         WHERE ID_Producto = p_ID_Producto;
     END IF;
-END //
-
+END;
+//
 
 CREATE PROCEDURE EliminarProveedor(
     IN p_ID_Proveedor INT
@@ -717,24 +693,8 @@ BEGIN
     WHERE ID_Proveedor = p_ID_Proveedor;
     DELETE FROM Proveedores
     WHERE ID_Proveedor = p_ID_Proveedor;
-END //
-
-
-CREATE PROCEDURE RegistrarVentaSimple(
-    IN p_ID_Cliente INT,
-    IN p_Fecha DATE,
-    IN p_Total DECIMAL(10,2)
-)
-BEGIN
-    -- Nota: Ventas simple asume que existe columna Total en Ventas; si no existe, omitir o ajustar
-    -- Vamos a crear la columna Total si no existe (seguimos con enfoque completo)
-    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='Ventas' AND COLUMN_NAME='Total') THEN
-        ALTER TABLE Ventas ADD COLUMN Total DECIMAL(12,2) DEFAULT 0;
-    END IF;
-    INSERT INTO Ventas (ID_Cliente, Fecha_Venta, Total)
-    VALUES (p_ID_Cliente, p_Fecha, p_Total);
-END //
-
+END;
+//
 
 CREATE PROCEDURE ListarProductosPorProveedor(
     IN p_ID_Proveedor INT
@@ -745,8 +705,8 @@ BEGIN
     JOIN Compras C ON DC.ID_Compra = C.ID_Compra
     JOIN Productos P ON DC.ID_Producto = P.ID_Producto
     WHERE C.ID_Proveedor = p_ID_Proveedor;
-END //
-
+END;
+//
 
 CREATE PROCEDURE BuscarProductoPorNombre(
     IN p_Nombre VARCHAR(100)
@@ -755,8 +715,8 @@ BEGIN
     SELECT *
     FROM Productos
     WHERE Nombre_P LIKE CONCAT('%', p_Nombre, '%');
-END //
-
+END;
+//
 
 CREATE PROCEDURE VerHistorialVentasCliente(
     IN p_ID_Cliente INT
@@ -768,8 +728,8 @@ BEGIN
     JOIN Productos P ON DV.ID_Producto = P.ID_Producto
     WHERE V.ID_Cliente = p_ID_Cliente
     ORDER BY V.Fecha_Venta DESC;
-END //
-
+END;
+//
 
 CREATE PROCEDURE ActualizarStockProducto(
     IN p_ID_Producto INT,
@@ -780,12 +740,13 @@ BEGIN
     SET Cantidad = p_NuevaCantidad,
         Disponible = p_NuevaCantidad > 0
     WHERE ID_Producto = p_ID_Producto;
-END //
+END;
+//
 
 DELIMITER ;
 
 -- ======================================
--- FUNCIONES (corregidas)
+-- FUNCIONES (ajustadas si aplica)
 -- ======================================
 DELIMITER //
 CREATE FUNCTION ObtenerNombreCompletoCliente(p_ID_Cliente INT)
@@ -798,8 +759,8 @@ BEGIN
     FROM Clientes
     WHERE ID_Cliente = p_ID_Cliente;
     RETURN nombre_completo;
-END //
-
+END;
+//
 
 CREATE FUNCTION TotalVentasProducto(p_ID_Producto INT)
 RETURNS DECIMAL(12,2)
@@ -811,8 +772,8 @@ BEGIN
     FROM Detalle_Ventas
     WHERE ID_Producto = p_ID_Producto;
     RETURN total;
-END //
-
+END;
+//
 
 CREATE FUNCTION TotalComprasProducto(p_ID_Producto INT)
 RETURNS DECIMAL(12,2)
@@ -824,8 +785,8 @@ BEGIN
     FROM Detalle_Compras
     WHERE ID_Producto = p_ID_Producto;
     RETURN total;
-END //
-
+END;
+//
 
 CREATE FUNCTION StockProducto(p_ID_Producto INT)
 RETURNS INT
@@ -837,8 +798,8 @@ BEGIN
     FROM Productos
     WHERE ID_Producto = p_ID_Producto;
     RETURN IFNULL(stock,0);
-END //
-
+END;
+//
 
 CREATE FUNCTION ClienteActivo(p_ID_Cliente INT)
 RETURNS BOOLEAN
@@ -849,8 +810,8 @@ BEGIN
     FROM Ventas
     WHERE ID_Cliente = p_ID_Cliente;
     RETURN existe > 0;
-END //
-
+END;
+//
 
 CREATE FUNCTION TotalStockGlobal()
 RETURNS INT
@@ -860,8 +821,8 @@ BEGIN
     SELECT IFNULL(SUM(Cantidad), 0) INTO total
     FROM Productos;
     RETURN total;
-END //
-
+END;
+//
 
 CREATE FUNCTION PromedioPrecioVenta()
 RETURNS DECIMAL(10,2)
@@ -871,8 +832,8 @@ BEGIN
     SELECT IFNULL(AVG(PrecioVenta), 0) INTO promedio
     FROM Productos;
     RETURN promedio;
-END //
-
+END;
+//
 
 CREATE FUNCTION DiasDesdeUltimaCompra(p_ID_Proveedor INT)
 RETURNS INT
@@ -888,8 +849,8 @@ BEGIN
     END IF;
     SET dias = DATEDIFF(CURDATE(), fecha_ultima);
     RETURN dias;
-END //
-
+END;
+//
 
 CREATE FUNCTION TotalComprasCliente(p_ID_Cliente INT)
 RETURNS INT
@@ -900,8 +861,8 @@ BEGIN
     FROM Ventas
     WHERE ID_Cliente = p_ID_Cliente;
     RETURN total;
-END //
-
+END;
+//
 
 CREATE FUNCTION TotalVentasEnFecha(p_Fecha DATE)
 RETURNS DECIMAL(12,2)
@@ -913,260 +874,110 @@ BEGIN
     JOIN Detalle_Ventas DV ON V.ID_Venta = DV.ID_Venta
     WHERE V.Fecha_Venta = p_Fecha;
     RETURN monto;
-END //
+END;
+//
 DELIMITER ;
 
 -- ======================================
--- ROLES, USUARIOS Y PRIVILEGIOS (opcional, puede requerir privilegios de root)
+-- ROLES, USUARIOS Y PRIVILEGIOS (opcional)
 -- ======================================
--- Nota: los siguientes comandos pueden fallar si el servidor no permite crear roles/usuarios desde este script.
--- Si ocurre un error, ejecutarlos manualmente como usuario con privilegios suficientes.
+-- Estos comandos pueden requerir privilegios de root en el servidor.
+-- Si falla, ejecutarlos manualmente con un usuario con permisos suficientes.
 
--- Crear roles
-CREATE ROLE IF NOT EXISTS 'Admin', 'Empleado', 'Cliente'; -- se crean los roles
+-- Crear roles (MySQL 8+)
+ CREATE ROLE IF NOT EXISTS 'Admin', 'Empleado', 'Cliente';
 
--- Crear usuarios y asignar roles (ejemplo)
-CREATE USER IF NOT EXISTS 'admin_moto'@'localhost' IDENTIFIED BY 'Admin123'; -- se crea el usuario si no existe y se le asigna una contrasena
-CREATE USER IF NOT EXISTS 'empleado_moto'@'localhost' IDENTIFIED BY 'Empleado123';
-CREATE USER IF NOT EXISTS 'cliente_moto'@'localhost' IDENTIFIED BY 'Cliente123';
+-- Crear usuarios ejemplo (ajusta contraseñas en producción)
+ CREATE USER IF NOT EXISTS 'admin_moto'@'localhost' IDENTIFIED BY 'Admin123';
+ CREATE USER IF NOT EXISTS 'empleado_moto'@'localhost' IDENTIFIED BY 'Empleado123';
+ CREATE USER IF NOT EXISTS 'cliente_moto'@'localhost' IDENTIFIED BY 'Cliente123';
 
-GRANT 'Admin' TO 'admin_moto'@'localhost';
-GRANT 'Empleado' TO 'empleado_moto'@'localhost';
-GRANT 'Cliente' TO 'cliente_moto'@'localhost';
+ GRANT 'Admin' TO 'admin_moto'@'localhost';
+ GRANT 'Empleado' TO 'empleado_moto'@'localhost';
+ GRANT 'Cliente' TO 'cliente_moto'@'localhost';
 
-SET DEFAULT ROLE 'Admin' TO 'admin_moto'@'localhost';
-SET DEFAULT ROLE 'Empleado' TO 'empleado_moto'@'localhost';
-SET DEFAULT ROLE 'Cliente' TO 'cliente_moto'@'localhost';
-
--- Asignar privilegios ejemplo (ajustar según necesidad)
-GRANT ALL PRIVILEGES ON Moto_Repuesto.* TO 'admin_moto'@'localhost' WITH GRANT OPTION;
-GRANT SELECT, INSERT, UPDATE, DELETE ON Moto_Repuesto.Ventas TO 'empleado_moto'@'localhost';
-GRANT SELECT, INSERT, UPDATE, DELETE ON Moto_Repuesto.Detalle_Ventas TO 'empleado_moto'@'localhost';
-GRANT SELECT ON Moto_Repuesto.Productos TO 'empleado_moto'@'localhost';
-GRANT SELECT ON Moto_Repuesto.Clientes TO 'empleado_moto'@'localhost';
-GRANT SELECT ON Moto_Repuesto.Productos TO 'cliente_moto'@'localhost';
-
-FLUSH PRIVILEGES;
+ GRANT ALL PRIVILEGES ON Moto_Repuesto.* TO 'admin_moto'@'localhost' WITH GRANT OPTION;
+ GRANT SELECT, INSERT, UPDATE, DELETE ON Moto_Repuesto.Ventas TO 'empleado_moto'@'localhost';
+ GRANT SELECT, INSERT, UPDATE, DELETE ON Moto_Repuesto.Detalle_Ventas TO 'empleado_moto'@'localhost';
+ GRANT SELECT ON Moto_Repuesto.Productos TO 'empleado_moto'@'localhost';
+ GRANT SELECT ON Moto_Repuesto.Clientes TO 'cliente_moto'@'localhost';
+ FLUSH PRIVILEGES;
 
 -- ======================================
--- DATOS: INSERCIONES (Se corrigieron nombres de columnas y se mantienen los datos originales)
+-- DATOS: INSERCIONES DE EJEMPLO (actualizadas)
 -- ======================================
 
--- Usuarios
+-- Usuarios (demo)
 INSERT INTO Usuarios (usuario, contraseña, rol) VALUES
 ('eli', 'eli2025', 'Adm'),
 ('javier51', '123456', 'Empleado'),
 ('cruz51', '20252025', 'Empleado');
 
--- Proveedores (original + 20)
+-- Empleados (nuevos)
+INSERT INTO Empleados (Nombre, Apellido, Telefono, Email, Cargo) VALUES
+('Miguel', 'Ramírez', '3001234567', 'miguel.r@taller.com', 'Jefe de Compras'),
+('Laura', 'Gonzalez', '3012345678', 'laura.g@taller.com', 'Vendedora'),
+('Pedro', 'Santos', '3023456789', 'pedro.s@taller.com', 'Auxiliar');
+
+-- Proveedores (ejemplo)
 INSERT INTO Proveedores (Nombre_Prov, Contacto, Email) VALUES
 ('Repuestos Rápidos', '1234567890', 'contacto@repuestosrapidos.com'),
 ('MotoPartes S.A.', '0987654321', 'ventas@motopartes.com'),
-('Speed Moto', '1122334455', 'info@speedmoto.com'),
-('AutoMotos LTDA', '3012345678', 'ventas@automotos.com'),
-('Repuestos Elite', '3023456789', 'info@repuestoselite.com'),
-('MotoAccesorios', '3034567890', 'contacto@motoaccesorios.com'),
-('Veloz Parts', '3045678901', 'soporte@velozparts.com'),
-('MotoTech', '3056789012', 'ventas@mototech.com'),
-('Repuestos Pro', '3067890123', 'info@repuestospro.com'),
-('Speedy Moto', '3078901234', 'contacto@speedymoto.com'),
-('MotoZone', '3089012345', 'ventas@motozone.com'),
-('Repuestos Dinámicos', '3090123456', 'info@repuestosdinamicos.com'),
-('MotoPower', '3101234567', 'soporte@motopower.com'),
-('Turbo Parts', '3112345678', 'ventas@turboparts.com'),
-('MotoStar', '3123456789', 'contacto@motostar.com'),
-('Repuestos Veloces', '3134567890', 'info@repuestosveloces.com'),
-('MotoMundo', '3145678901', 'ventas@motomundo.com'),
-('Speed Parts', '3156789012', 'soporte@speedparts.com'),
-('MotoRacing', '3167890123', 'contacto@motoracing.com'),
-('Repuestos Top', '3178901234', 'ventas@repuestostop.com'),
-('MotoEnergy', '3189012345', 'info@motoenergy.com'),
-('Fast Moto', '3190123456', 'soporte@fastmoto.com'),
-('MotoPremium', '3201234567', 'ventas@motopremium.com');
+('Speed Moto', '1122334455', 'info@speedmoto.com');
 
--- Clientes (original + 20)
+-- Clientes (ejemplo)
 INSERT INTO Clientes (Nombre1, Nombre2, Apellidos1, Apellidos2, Cedula, Telefono) VALUES
 ('Juan', 'Edgardo', 'Pérez', 'López', '123456789', '3216549870'),
 ('María', 'Isabel', 'Gómez', 'Rodríguez', '987654321', '3101234567'),
-('Carlos', 'Andrés', 'Martínez', 'Sánchez', '456789123', '3112345678'),
-('Laura', 'Sofía', 'Ramírez', 'Torres', '321654987', '3123456789'),
-('Diego', 'Felipe', 'Hernández', 'García', '789123456', '3134567890'),
-('Ana', 'Lucía', 'Díaz', 'Moreno', '654987321', '3145678901'),
-('Pedro', 'José', 'Vega', 'Castro', '147258369', '3156789012'),
-('Camila', 'Valentina', 'Rojas', 'Mendoza', '258369147', '3167890123'),
-('Luis', 'Fernando', 'Ortiz', 'Pineda', '369147258', '3178901234'),
-('Sofía', 'Alejandra', 'Cruz', 'Vargas', '741852963', '3189012345'),
-('Jorge', 'Enrique', 'Silva', 'Ríos', '852963741', '3190123456'),
-('Valeria', 'Paola', 'López', 'Guzmán', '963741852', '3201234567'),
-('Gabriel', 'Iván', 'Molina', 'Cárdenas', '159753486', '3212345678'),
-('Daniela', 'Marcela', 'Suárez', 'Navarro', '357951468', '3223456789'),
-('Andrés', 'Camilo', 'Reyes', 'Ospina', '753951486', '3234567890'),
-('Clara', 'Victoria', 'Pinto', 'Mejía', '951753624', '3245678901'),
-('Santiago', 'Nicolás', 'Aguilar', 'Bermúdez', '624951753', '3256789012'),
-('Elena', 'Gabriela', 'Castaño', 'Quintero', '486159753', '3267890123'),
-('Mateo', 'Sebastián', 'Montoya', 'Soto', '753486159', '3278901234'),
-('Isabella', 'Juliana', 'Franco', 'Zapata', '159486753', '3289012345'),
-('Emilio', 'Rafael', 'Gil', 'Hurtado', '321789654', '3290123456');
+('Carlos', 'Andrés', 'Martínez', 'Sánchez', '456789123', '3112345678');
 
--- Productos (original + 20) CORREGIDO: columnas PrecioCompra, PrecioVenta
+-- Productos (ejemplo)
 INSERT INTO Productos (Nombre_P, Descripcion, Cantidad, PrecioCompra, PrecioVenta) VALUES
 ('Batería Moto X', 'Batería de 12V para motos', 50, 45.00, 70.00),
 ('Aceite Sintético', 'Aceite 10W-40 para motos', 100, 30.00, 50.00),
 ('Llantas Pirelli', 'Llantas de alta duración', 30, 100.00, 150.00),
-('Sistema de Rodamiento', 'Rodamientos de alta calidad', 5, 2500.00, 3000.00),
 ('Casco Integral Pro', 'Casco integral de alta seguridad', 20, 150.00, 250.00),
-('Kit de Freno ABS', 'Sistema de frenos ABS de última generación', 10, 350.00, 500.00),
-('Cadena de Transmisión', 'Cadena reforzada para motos deportivas', 40, 80.00, 120.00),
-('Filtro de Aire', 'Filtro de aire para motocicletas estándar', 100, 20.00, 35.00),
-('Amortiguadores Racing', 'Amortiguadores ajustables de alto rendimiento', 15, 200.00, 300.00),
-('Manillar Deportivo', 'Manillar ergonómico de aluminio', 30, 50.00, 80.00),
-('Juego de Pastillas de Freno', 'Pastillas de freno cerámicas', 70, 25.00, 40.00),
-('Luces LED Frontales', 'Luces LED de alto brillo para motos', 50, 60.00, 100.00),
-('Escape Deportivo', 'Sistema de escape deportivo de acero inoxidable', 5, 400.00, 600.00),
-('Protector de Tanque', 'Protector adhesivo para el tanque de combustible', 120, 15.00, 25.00),
-('Aceite de Cadena', 'Lubricante especial para cadenas de motos', 90, 10.00, 18.00),
-('Claxon Eléctrico', 'Claxon eléctrico de alta potencia', 25, 40.00, 70.00),
-('Espejos Retrovisores', 'Par de espejos retrovisores ajustables', 60, 30.00, 55.00),
-('Cubierta de Llantas', 'Cubiertas protectoras para llantas', 35, 90.00, 130.00),
-('Kit de Herramientas Básicas', 'Kit con herramientas esenciales para motos', 40, 50.00, 85.00),
-('Bujías NGK', 'Bujías de alto rendimiento', 80, 12.00, 20.00),
-('Guantes de Moto', 'Guantes de cuero reforzados', 50, 25.00, 45.00),
-('Candado de Disco', 'Candado de seguridad para motos', 30, 35.00, 60.00),
-('Cargador USB', 'Cargador USB para motos', 60, 15.00, 30.00),
-('Soporte para GPS', 'Soporte universal para dispositivos GPS', 40, 20.00, 35.00),
-('Chaleco Reflectivo', 'Chaleco de seguridad reflectivo', 100, 10.00, 18.00),
-('Cubre Asiento', 'Cubre asiento impermeable', 70, 18.00, 30.00),
-('Bolsa de Tanque', 'Bolsa magnética para tanque', 25, 50.00, 80.00),
-('Intercomunicador Bluetooth', 'Sistema de comunicación Bluetooth', 15, 100.00, 150.00),
-('Kit de Embrague', 'Kit de embrague reforzado', 20, 80.00, 120.00),
-('Luz Trasera LED', 'Luz trasera LED de alta intensidad', 50, 25.00, 40.00),
-('Cubre Manos', 'Protectores de manos para motos', 60, 30.00, 50.00),
-('Tensor de Cadena', 'Tensor automático para cadenas', 40, 15.00, 25.00),
-('Cilindro de Motor', 'Cilindro de repuesto para motos', 10, 200.00, 300.00),
-('Radiador de Aceite', 'Radiador para enfriamiento de aceite', 8, 150.00, 220.00),
-('Protector de Motor', 'Protector metálico para motor', 30, 60.00, 90.00),
-('Asiento Ergonómico', 'Asiento de gel para mayor comodidad', 25, 70.00, 110.00),
-('Cubre Radiador', 'Cubierta protectora para radiador', 35, 40.00, 65.00),
-('Kit de Limpieza', 'Kit para limpieza y mantenimiento', 90, 20.00, 35.00),
-('Portaequipaje Trasero', 'Portaequipaje de acero para motos', 20, 80.00, 120.00);
+('Juego de Pastillas de Freno', 'Pastillas de freno cerámicas', 70, 25.00, 40.00);
 
--- Compras (original + 20)
-INSERT INTO Compras (Fecha_compra, ID_Proveedor) VALUES
-('2024-03-18', 1),
-('2024-03-20', 2),
-('2024-03-22', 3),
-('2024-03-25', 1),
-('2024-03-28', 2),
-('2024-03-01', 1),
-('2024-03-02', 2),
-('2024-03-05', 3),
-('2024-04-01', 4),
-('2024-04-05', 5),
-('2024-04-10', 6),
-('2024-04-15', 7),
-('2024-04-20', 8),
-('2024-04-25', 9),
-('2024-05-01', 10),
-('2024-05-05', 11),
-('2024-05-10', 12),
-('2024-05-15', 13),
-('2024-05-20', 14),
-('2024-05-25', 15),
-('2024-06-01', 16),
-('2024-06-05', 17),
-('2024-06-10', 18),
-('2024-06-15', 19),
-('2024-06-20', 20),
-('2024-06-25', 21),
-('2024-07-01', 22),
-('2024-07-05', 23);
+-- Compras (creadas con ID_Empleado) -- Total_Compra inicial 0, se llenará por triggers tras insertar Detalle_Compras
+INSERT INTO Compras (Fecha_compra, ID_Proveedor, ID_Empleado, Total_Compra) VALUES
+('2024-03-18', 1, 1, 0),
+('2024-03-20', 2, 1, 0),
+('2024-03-22', 3, 1, 0);
 
--- Ventas (original + 20)
-INSERT INTO Ventas (Fecha_Venta, ID_Cliente) VALUES
-('2024-03-18', 1),
-('2024-03-20', 2),
-('2024-03-22', 3),
-('2024-03-26', 1),
-('2024-03-30', 2),
-('2024-03-10', 1),
-('2024-03-12', 2),
-('2024-03-15', 3),
-('2024-04-02', 2),
-('2024-04-06', 3),
-('2024-04-11', 4),
-('2024-04-16', 5),
-('2024-04-21', 6),
-('2024-04-26', 7),
-('2024-05-02', 8),
-('2024-05-06', 9),
-('2024-05-11', 10),
-('2024-05-16', 11),
-('2024-05-21', 12),
-('2024-05-26', 13),
-('2024-06-02', 14),
-('2024-06-06', 15),
-('2024-06-11', 16),
-('2024-06-16', 17),
-('2024-06-21', 18),
-('2024-06-26', 19),
-('2024-07-02', 20),
-('2024-07-06', 21);
+-- Ventas (creadas con ID_Empleado) -- Total_Venta inicial 0, se llenará por triggers tras insertar Detalle_Ventas
+INSERT INTO Ventas (Fecha_Venta, ID_Cliente, ID_Empleado, Total_Venta) VALUES
+('2024-03-18', 1, 2, 0),
+('2024-03-20', 2, 2, 0),
+('2024-03-22', 3, 2, 0);
 
--- Detalle_Compras (original + 20)
+-- Detalle_Compras (al insertarse actualizarán stock y Total_Compra por triggers)
 INSERT INTO Detalle_Compras (ID_Compra, ID_Producto, Cantidad_com, Precio_Com) VALUES
 (1, 1, 20, 45.00),
 (2, 2, 50, 30.00),
-(3, 3, 15, 100.00),
-(9, 4, 10, 2500.00),
-(10, 5, 15, 150.00),
-(11, 6, 8, 350.00),
-(12, 7, 20, 80.00),
-(13, 8, 50, 20.00),
-(14, 9, 12, 200.00),
-(15, 10, 25, 50.00),
-(16, 11, 40, 25.00),
-(17, 12, 30, 60.00),
-(18, 13, 5, 400.00),
-(19, 14, 60, 15.00),
-(20, 15, 70, 10.00),
-(21, 16, 20, 40.00),
-(22, 17, 35, 30.00),
-(23, 18, 15, 90.00),
-(24, 19, 25, 50.00),
-(25, 20, 10, 12.00),
-(26, 21, 30, 25.00),
-(27, 22, 20, 35.00),
-(28, 23, 40, 15.00);
+(3, 3, 15, 100.00);
 
--- Detalle_Ventas (original + 20)
+-- Detalle_Ventas (al insertarse validarán stock y actualizarán Total_Venta)
 INSERT INTO Detalle_Ventas (ID_Venta, ID_Producto, Cantidad_ven, Precio_Ven) VALUES
 (1, 1, 5, 70.00),
 (2, 2, 10, 50.00),
-(3, 3, 2, 150.00),
-(9, 4, 1, 3000.00),
-(10, 5, 2, 250.00),
-(11, 6, 1, 500.00),
-(12, 7, 5, 120.00),
-(13, 8, 10, 35.00),
-(14, 9, 3, 300.00),
-(15, 10, 4, 80.00),
-(16, 11, 8, 40.00),
-(17, 12, 5, 100.00),
-(18, 13, 1, 600.00),
-(19, 14, 15, 25.00),
-(20, 15, 20, 18.00),
-(21, 16, 3, 70.00),
-(22, 17, 6, 55.00),
-(23, 18, 2, 130.00),
-(24, 19, 5, 85.00),
-(25, 20, 4, 20.00),
-(26, 21, 7, 45.00),
-(27, 22, 3, 60.00),
-(28, 23, 10, 30.00);
+(3, 3, 2, 150.00);
+
+-- Añadimos más compras/ventas de ejemplo vinculando empleados
+INSERT INTO Compras (Fecha_compra, ID_Proveedor, ID_Empleado, Total_Compra) VALUES
+('2024-04-01', 1, 1, 0);
+INSERT INTO Detalle_Compras (ID_Compra, ID_Producto, Cantidad_com, Precio_Com) VALUES
+(LAST_INSERT_ID(), 4, 10, 2500.00);
+
+INSERT INTO Ventas (Fecha_Venta, ID_Cliente, ID_Empleado, Total_Venta) VALUES
+('2024-04-02', 2, 2, 0);
+INSERT INTO Detalle_Ventas (ID_Venta, ID_Producto, Cantidad_ven, Precio_Ven) VALUES
+(LAST_INSERT_ID(), 4, 1, 3000.00);
 
 -- ======================================
 -- CONSULTAS DE EJEMPLO
 -- ======================================
+SELECT * FROM Empleados LIMIT 10;
 SELECT * FROM Proveedores LIMIT 10;
 SELECT * FROM Clientes LIMIT 10;
 SELECT * FROM Productos LIMIT 20;
@@ -1174,6 +985,6 @@ SELECT * FROM Compras LIMIT 10;
 SELECT * FROM Ventas LIMIT 10;
 SELECT * FROM Detalle_Compras LIMIT 10;
 SELECT * FROM Detalle_Ventas LIMIT 10;
-
+SELECT * FROM Bitacora ORDER BY Fecha DESC LIMIT 20;
 
 -- FIN DEL SCRIPT
