@@ -37,16 +37,14 @@ export const obtenerCompra = async (req, res) => {
 // Registrar una nueva Compra
   export const registrarCompra = async (req, res) => {
     try {
-      const { Fecha_compra, Cantidad, ID_Proveedor } = req.body;
+      const { Fecha_compra, ID_Proveedor, ID_Empleado, Total_Compra } = req.body;
       const [result] = await pool.query(
-        "INSERT INTO Compras (Fecha_compra, Cantidad, ID_Proveedor) VALUES (?, ?, ?)",
-        [Fecha_compra, Cantidad, ID_Proveedor]  
+        "INSERT INTO Compras (Fecha_compra, ID_Proveedor, ID_Empleado, Total_Compra) VALUES (?, ?, ?, ?)",
+        [Fecha_compra, ID_Proveedor, ID_Empleado, Total_Compra]  
       );
       res.json({
         ID_Compra: result.insertId,
-        Fecha_compra,
-        Cantidad,
-        ID_Proveedor
+        Fecha_compra, ID_Proveedor, ID_Empleado, Total_Compra
       });
     } catch (error) {
       return res.status(500).json({
