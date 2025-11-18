@@ -936,6 +936,31 @@ BEGIN
 END;
 //
 DELIMITER ;
+-- ======================================
+-- Eventos
+-- ======================================
+-- Evento: limpiar_bitacora_mensual
+-- Objetivo: borrar registros antiguos de la tabla Bitacora para evitar que crezca demasiado
+-- Se ejecuta automáticamente una vez al mes
+
+CREATE EVENT IF NOT EXISTS limpiar_bitacora_mensual   -- Crea el evento solo si no existe
+ON SCHEDULE EVERY 1 MONTH                              -- Indica que el evento correrá cada 1 mes
+STARTS (                                               
+    TIMESTAMP(CURRENT_DATE) +                           -- Convierte la fecha actual a formato timestamp
+    INTERVAL 1 DAY - INTERVAL DAY(CURRENT_DATE)-1 DAY   -- Ajusta para que inicie el primer día del mes
+)                                                      
+DO
+    DELETE FROM Bitacora                                -- Acción del evento: eliminar registros
+    WHERE Fecha < NOW() - INTERVAL 6 MONTH;             -- Solo borra registros de más de 6 meses
+
+CREATE EVENT IF NOT EXISTS generar_resumen_semanal
+ON SCHEDULE EVERY 1 WEEK
+DO
+    INSERT INTO Resumen_Semanal (Fecha_Generacion, Total_Productos, Total_Ventas_Sem)
+    SELECT NOW(), (SELECT COUNT(*) FROM Productos), 
+        IFNULL((SELECT SUM(DV.Cantidad_ven*DV.Precio_Ven)
+               FROM Ventas V JOIN Detalle_Ventas DV ON V.ID_Venta = DV.ID_Venta
+               WHERE V.Fecha_Venta >= CURDATE() - INTERVAL 7 DAY),0);
 
 -- ======================================
 -- ROLES, USUARIOS Y PRIVILEGIOS (opcional)
@@ -1045,5 +1070,7 @@ SELECT * FROM Ventas LIMIT 10;
 SELECT * FROM Detalle_Compras LIMIT 10;
 SELECT * FROM Detalle_Ventas LIMIT 10;
 SELECT * FROM Bitacora ORDER BY Fecha DESC LIMIT 20;
+SET GLOBAL event_scheduler = ON;
+
 
 -- FIN DEL SCRIPT
