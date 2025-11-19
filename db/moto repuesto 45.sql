@@ -119,25 +119,26 @@ DELIMITER //
 -- TRIGGER: trg_clientes_insert
 -- Se activa automáticamente después de insertar un cliente nuevo
 -- Guarda la acción en la tabla Bitácora
--- ==========================================
+-- =========================================
+-- OBJETIVO:
+--   Registrar automáticamente en la tabla Bitacora cada vez 
+--   que se inserte un nuevo cliente en la tabla Clientes.
+--   Esto sirve para llevar un historial de acciones (auditoría)
+--   y saber quién agregó un cliente, cuándo y qué datos ingresó.
+
+-- Guarda en Bitacora cuando se inserta un cliente
 CREATE TRIGGER trg_clientes_insert
-AFTER INSERT ON Clientes       -- Se ejecuta después de insertar en Clientes
-FOR EACH ROW                   -- Afecta cada registro nuevo
+AFTER INSERT ON Clientes
+FOR EACH ROW
 BEGIN
-    -- Inserta en la bitácora los datos del nuevo cliente
+    -- Inserta registro en la bitácora
     INSERT INTO Bitacora (Tabla, Operacion, Usuario, Detalle)
-    VALUES (
-        'Clientes',            -- Tabla afectada
-        'INSERT',              -- Tipo de operación
-        USER(),                -- Usuario que realizó la acción
-        CONCAT(                -- Descripción del registro insertado
-            'Se agregó el cliente: ', 
-            NEW.Nombre1, ' ', 
-            COALESCE(NEW.Apellidos1,'') -- Evita errores si el apellido está vacío
-        )
-    );
+    VALUES ('Clientes','INSERT',USER(),
+            CONCAT('Cliente agregado: ', NEW.Nombre1,' ',COALESCE(NEW.Apellidos1,'')));
 END;
 //
+
+
 
 
 -- ==========================================
@@ -538,18 +539,20 @@ BEGIN
     VALUES (p_Nombre1, p_Nombre2, p_Apellidos1, p_Apellidos2, p_Cedula, p_Telefono);
 END;
 //
-
+-- Procedimiento almacenado para registrar un nuevo producto en la tabla Productos
 CREATE PROCEDURE RegistrarProducto(
-    IN p_Nombre_P VARCHAR(100),
-    IN p_Descripcion VARCHAR(200),
-    IN p_Cantidad INT,
-    IN p_PrecioCompra DECIMAL(10,2),
-    IN p_PrecioVenta DECIMAL(10,2)
+    IN p_Nombre_P VARCHAR(100),     -- Nombre del producto que se registrará
+    IN p_Descripcion VARCHAR(200),  -- Descripción breve del producto
+    IN p_Cantidad INT,              -- Cantidad inicial del producto en inventario
+    IN p_PrecioCompra DECIMAL(10,2),-- Precio de compra para control de costos
+    IN p_PrecioVenta DECIMAL(10,2)  -- Precio de venta al cliente
 )
 BEGIN
+    -- Inserta un nuevo registro en la tabla Productos utilizando los parámetros recibidos
     INSERT INTO Productos (Nombre_P, Descripcion, Cantidad, PrecioCompra, PrecioVenta)
     VALUES (p_Nombre_P, p_Descripcion, p_Cantidad, p_PrecioCompra, p_PrecioVenta);
 END;
+
 //
 
 CREATE PROCEDURE RegistrarProveedor(
